@@ -7,9 +7,7 @@ import NoteCard from '@/components/NoteCard';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Loader2 } from 'lucide-react';
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
-// Removed v4 as uuidv4 import as crypto.randomUUID is used
 
-// Sample initial notes - replace with Firebase data fetching later
 const initialNotesData: Note[] = [
   {
     id: '1',
@@ -17,7 +15,7 @@ const initialNotesData: Note[] = [
     color: '#FFFACD', // LemonChiffon
     tags: [{ id: 'tag1', name: 'Welcome' }],
     isPinned: false,
-    imageUrl: 'https://placehold.co/600x400.png', // data-ai-hint will be in NoteCard
+    imageUrl: 'https://placehold.co/600x400.png', 
     createdAt: new Date(Date.now() - 86400000).toISOString(), // Yesterday
     updatedAt: new Date().toISOString(),
   },
@@ -44,13 +42,10 @@ const initialNotesData: Note[] = [
 export default function HomePage() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { isMobile } = useSidebar(); // Get mobile status from sidebar context
+  const { isMobile } = useSidebar(); 
 
   useEffect(() => {
-    // Simulate fetching notes
-    // In a real app, this would be an API call to Firebase
     const timer = setTimeout(() => {
-      // Check if localStorage has notes
       try {
         const storedNotes = localStorage.getItem('stickycanvas-notes');
         if (storedNotes) {
@@ -60,16 +55,15 @@ export default function HomePage() {
         }
       } catch (error) {
         console.error("Failed to parse notes from localStorage", error);
-        setNotes(initialNotesData); // Fallback to initial data on error
+        setNotes(initialNotesData); 
       }
       setIsLoading(false);
     }, 500);
-    return () => clearTimeout(timer); // Cleanup timer on unmount
+    return () => clearTimeout(timer); 
   }, []);
   
   useEffect(() => {
-    // Persist notes to localStorage whenever they change
-    if (!isLoading) { // Only save after initial load
+    if (!isLoading) { 
         try {
             localStorage.setItem('stickycanvas-notes', JSON.stringify(notes));
         } catch (error) {
@@ -83,7 +77,7 @@ export default function HomePage() {
     const newNote: Note = {
       id: crypto.randomUUID(), 
       content: 'New Note! Click to edit...',
-      color: '#FFFFFF', // Default white
+      color: '#FFFFFF', 
       tags: [],
       isPinned: false,
       createdAt: new Date().toISOString(),
@@ -106,36 +100,36 @@ export default function HomePage() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center h-full flex-1 p-4">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      <div className="flex flex-col items-center justify-center h-full flex-1 p-4" role="status" aria-live="polite">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" aria-hidden="true" />
         <p className="ml-4 text-xl mt-4">Loading your canvas...</p>
       </div>
     );
   }
   
-  const pinnedNotes = notes.filter(note => note.isPinned).sort((a,b) => new Date(b.updatedAt).getTime() - new Date(a.createdAt).getTime()); // Pinned sorted by updatedAt
-  const unpinnedNotes = notes.filter(note => !note.isPinned).sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()); // Unpinned by createdAt
+  const pinnedNotes = notes.filter(note => note.isPinned).sort((a,b) => new Date(b.updatedAt).getTime() - new Date(a.createdAt).getTime()); 
+  const unpinnedNotes = notes.filter(note => !note.isPinned).sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()); 
   const sortedNotes = [...pinnedNotes, ...unpinnedNotes];
 
   return (
     <div className="flex flex-col h-screen bg-background">
       <header className="flex items-center justify-between p-4 border-b sticky top-0 bg-background/80 backdrop-blur-sm z-10">
         <div className="flex items-center gap-2">
-          {isMobile && <SidebarTrigger />} {/* Show trigger only on mobile */}
+          {isMobile && <SidebarTrigger aria-label="Toggle sidebar" />} 
           <h1 className="text-2xl font-semibold">My Notes</h1>
         </div>
         <Button onClick={handleAddNote} size="sm">
-          <PlusCircle className="mr-2 h-4 w-4" /> New Note
+          <PlusCircle className="mr-2 h-4 w-4" aria-hidden="true" /> New Note
         </Button>
       </header>
       <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto">
         {notes.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center">
-            <StickyNoteIcon className="w-16 h-16 text-muted-foreground mb-4" />
+            <StickyNoteIcon className="w-16 h-16 text-muted-foreground mb-4" aria-hidden="true" />
             <h2 className="text-2xl font-semibold mb-2">No notes yet!</h2>
             <p className="text-muted-foreground mb-4">Click "New Note" to get started.</p>
             <Button onClick={handleAddNote}>
-              <PlusCircle className="mr-2 h-4 w-4" /> Create Your First Note
+              <PlusCircle className="mr-2 h-4 w-4" aria-hidden="true" /> Create Your First Note
             </Button>
           </div>
         ) : (
@@ -167,6 +161,7 @@ const StickyNoteIcon = (props: React.SVGProps<SVGSVGElement>) => (
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
+    aria-hidden="true" // Added for decorative icon
     {...props}
   >
     <path d="M15.5 3H5a2 2 0 0 0-2 2v14c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2V8.5L15.5 3Z" />

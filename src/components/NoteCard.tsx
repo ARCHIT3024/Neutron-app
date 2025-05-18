@@ -115,19 +115,23 @@ export default function NoteCard({ note, onUpdate, onDelete }: NoteCardProps) {
       className="flex flex-col h-full shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:scale-[1.01]"
       style={{ backgroundColor: note.color, color: textColor }}
       data-testid={`note-card-${note.id}`}
+      aria-labelledby={`note-title-${note.id}`} // Assuming a title might be added later or use content as accessible name part
     >
       <CardHeader className="flex flex-row items-start justify-between p-4">
+        {/* Invisible title for accessibility if no visible title exists */}
+        <span id={`note-title-${note.id}`} className="sr-only">Note {note.id}</span>
         <div className="flex-1 min-w-0">
-          {/* Placeholder for title or editable title */}
+          {/* Placeholder for visible title or editable title */}
         </div>
         <div className="flex items-center space-x-1">
           <Button 
             variant="ghost" 
             size="icon" 
             onClick={handleTogglePin} 
-            className="hover:bg-white/20 focus:bg-white/20 active:scale-90 transform transition-transform duration-150" 
+            className="hover:bg-white/20 focus:bg-white/20 active:scale-90 transform transition-transform duration-150 focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1" 
             style={{ color: textColor }}
             aria-label={note.isPinned ? 'Unpin note' : 'Pin note'}
+            aria-pressed={note.isPinned}
           >
             {note.isPinned ? <PinOff className="h-5 w-5" /> : <Pin className="h-5 w-5" />}
           </Button>
@@ -136,34 +140,36 @@ export default function NoteCard({ note, onUpdate, onDelete }: NoteCardProps) {
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="hover:bg-white/20 focus:bg-white/20 active:scale-90 transform transition-transform duration-150" 
+                className="hover:bg-white/20 focus:bg-white/20 active:scale-90 transform transition-transform duration-150 focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1" 
                 style={{ color: textColor }}
-                aria-label="Note options"
+                aria-label="More options for this note"
+                aria-haspopup="true"
+                aria-expanded={undefined} // Radix will manage this
               >
                 <MoreVertical className="h-5 w-5" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => alert('Color picker not implemented yet.')}>
-                <Palette className="mr-2 h-4 w-4" /> Change Color
+              <DropdownMenuItem onSelect={() => alert('Color picker not implemented yet.')}>
+                <Palette className="mr-2 h-4 w-4" aria-hidden="true" /> Change Color
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => alert('Tag editing not implemented yet.')}>
-                <TagIcon className="mr-2 h-4 w-4" /> Edit Tags
+              <DropdownMenuItem onSelect={() => alert('Tag editing not implemented yet.')}>
+                <TagIcon className="mr-2 h-4 w-4" aria-hidden="true" /> Edit Tags
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => alert('Image attachment not implemented yet.')}>
-                <ImagePlus className="mr-2 h-4 w-4" /> Attach Image
+              <DropdownMenuItem onSelect={() => alert('Image attachment not implemented yet.')}>
+                <ImagePlus className="mr-2 h-4 w-4" aria-hidden="true" /> Attach Image
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleSummarize} disabled={isSummarizing || !note.content.trim()}>
+              <DropdownMenuItem onSelect={handleSummarize} disabled={isSummarizing || !note.content.trim()}>
                 {isSummarizing ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
                 ) : (
-                  <Sparkles className="mr-2 h-4 w-4" />
+                  <Sparkles className="mr-2 h-4 w-4" aria-hidden="true" />
                 )}
                 Summarize
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => onDelete(note.id)} className="text-destructive focus:text-destructive focus:bg-destructive/10">
-                <Trash2 className="mr-2 h-4 w-4" /> Delete Note
+              <DropdownMenuItem onSelect={() => onDelete(note.id)} className="text-destructive focus:text-destructive focus:bg-destructive/10">
+                <Trash2 className="mr-2 h-4 w-4" aria-hidden="true" /> Delete Note
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -178,41 +184,48 @@ export default function NoteCard({ note, onUpdate, onDelete }: NoteCardProps) {
             value={content}
             onChange={handleContentChange}
             onFocus={handleTextareaFocus}
-            onBlur={handleSave}
+            onBlur={handleSave} // Save on blur
             placeholder="Your note here..."
             className="w-full h-full resize-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0 p-1 min-h-[100px] text-sm"
             style={{ backgroundColor: 'transparent', color: textColor }}
-            aria-label="Note content"
+            aria-label={`Note content for note ${note.id}`}
+            aria-describedby={`note-meta-${note.id}`}
           />
         </div>
         {note.imageUrl && (
           <div className="mt-2 aspect-video relative overflow-hidden rounded-md">
-            <Image src={note.imageUrl} alt="Note attachment" layout="fill" objectFit="cover" data-ai-hint="abstract texture" />
+            <Image 
+              src={note.imageUrl} 
+              alt={`Attachment for note ${note.id}`} // More descriptive alt text
+              layout="fill" 
+              objectFit="cover" 
+              data-ai-hint="abstract texture" 
+            />
           </div>
         )}
       </CardContent>
-      <CardFooter className="p-4 flex flex-col items-start space-y-2 text-xs">
+      <CardFooter className="p-4 flex flex-col items-start space-y-2 text-xs" id={`note-meta-${note.id}`}>
         <div className={`transition-all duration-300 ease-in-out ${isEditing ? 'opacity-100 translate-y-0 h-auto' : 'opacity-0 -translate-y-2 h-0 pointer-events-none overflow-hidden'}`}>
-          {isEditing && ( // Keep this conditional render for the button itself to ensure it's in DOM only when needed for transitions
-            <Button size="sm" onClick={handleSave} className="self-start mt-2" variant="default" aria-label="Save note">
-                <Save className="mr-2 h-4 w-4" /> Save
+          {isEditing && ( 
+            <Button size="sm" onClick={handleSave} className="self-start mt-2" variant="default" aria-label={`Save changes to note ${note.id}`}>
+                <Save className="mr-2 h-4 w-4" aria-hidden="true" /> Save
             </Button>
           )}
         </div>
-        <div className="flex flex-wrap gap-1 mt-auto pt-2"> {/* Ensure tags are pushed down if save button is not there */}
+        <div className="flex flex-wrap gap-1 mt-auto pt-2">
           {note.tags.map((tag) => (
-            <Badge key={tag.id} variant="secondary" style={{ backgroundColor: 'rgba(128,128,128,0.2)', color: textColor }}>
+            <Badge key={tag.id} variant="secondary" style={{ backgroundColor: 'rgba(128,128,128,0.2)', color: textColor }} aria-label={`Tag: ${tag.name}`}>
               {tag.name}
             </Badge>
           ))}
         </div>
         {note.summary && (
-          <p className="italic opacity-80 text-xs mt-1 w-full"> {/* Ensure summary also takes full width if needed */}
+          <p className="italic opacity-80 text-xs mt-1 w-full">
             <strong>Summary:</strong> {note.summary}
           </p>
         )}
-        <p className="opacity-70 self-end text-xs mt-1"> {/* Ensure date is always at bottom right */}
-          Updated: {new Date(note.updatedAt).toLocaleDateString()}
+        <p className="opacity-70 self-end text-xs mt-1">
+          Updated: <time dateTime={note.updatedAt}>{new Date(note.updatedAt).toLocaleDateString()}</time>
         </p>
       </CardFooter>
     </Card>
