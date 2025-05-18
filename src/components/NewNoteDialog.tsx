@@ -208,6 +208,7 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
     }
   };
 
+  const dialogAccessibleTitle = noteToEdit ? 'Edit Note' : 'Create New Note';
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
@@ -219,11 +220,11 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
             e.preventDefault();
           }
         }}
-        aria-labelledby="note-editor-dialog-title"
+        aria-label={dialogAccessibleTitle}
       >
         <DialogHeader>
-          <DialogTitle id="note-editor-dialog-title" className="text-lg font-semibold" style={{ color: mainDialogTextColor }}>
-            {noteToEdit ? 'Edit Note' : 'Create New Note'}
+          <DialogTitle className="text-lg font-semibold" style={{ color: mainDialogTextColor }}>
+            {dialogAccessibleTitle}
           </DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
@@ -242,14 +243,14 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
           </div>
           <div className="grid gap-2">
             <Label htmlFor="note-content" className="text-sm font-medium" style={{ color: mainDialogTextColor === '#000000' ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.7)'}}>
-              Content (Markdown supported: **bold**, *italic*, <u>underline</u>, lists)
+              Content (Markdown and &lt;u&gt;underline&lt;/u&gt; supported)
             </Label>
             <Textarea
               ref={contentTextareaRef}
               id="note-content"
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="Start typing your note here..."
+              placeholder="Start typing your note here... Use **bold**, *italic*, <u>underline</u>, or * for lists."
               className="min-h-[150px] text-sm bg-background/80 border-input focus:ring-primary focus:border-primary rounded-md p-3 text-foreground placeholder:text-muted-foreground"
               aria-label="Note content"
             />
@@ -397,3 +398,4 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
 
 export default NoteEditorDialog;
     
+

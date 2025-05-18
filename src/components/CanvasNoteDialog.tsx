@@ -92,15 +92,17 @@ const CanvasNoteDialog: FC<CanvasNoteDialogProps> = ({ isOpen, onClose, onSave, 
     }
   };
 
+  const dialogTitle = noteToEdit ? 'Edit Canvas Note' : 'Create New Canvas Note';
+
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent 
         className="sm:max-w-[600px] md:max-w-[700px] lg:max-w-[800px] xl:max-w-[900px] bg-card shadow-xl rounded-lg p-6"
-        aria-labelledby="canvas-note-dialog-title"
+        aria-label={dialogTitle}
       >
         <DialogHeader>
-          <DialogTitle id="canvas-note-dialog-title" className="text-lg font-semibold text-card-foreground">
-            {noteToEdit ? 'Edit Canvas Note' : 'Create New Canvas Note'}
+          <DialogTitle className="text-lg font-semibold text-card-foreground">
+            {dialogTitle}
           </DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
