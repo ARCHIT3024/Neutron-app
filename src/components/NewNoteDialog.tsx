@@ -19,7 +19,7 @@ import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover
 import { Palette, Tags as TagsIconLucide, BoldIcon, UnderlineIcon, ListIcon, Check } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import type { Note, Tag } from '@/types';
-import { useTheme } from '@/hooks/use-theme'; // Added import
+import { useTheme } from '@/hooks/use-theme'; 
 
 interface NoteEditorDialogProps {
   isOpen: boolean;
@@ -47,7 +47,7 @@ const getTextColorForBackground = (bgColor?: string): string => {
     const g = parseInt(bgColor.slice(3, 5), 16);
     const b = parseInt(bgColor.slice(5, 7), 16);
     const hsp = Math.sqrt(0.299 * (r * r) + 0.587 * (g * g) + 0.114 * (b * b));
-    return hsp > 127.5 ? '#000000' : '#FFFFFF'; // If light background, use dark text, else light text
+    return hsp > 127.5 ? '#000000' : '#FFFFFF'; 
   } catch (e) {
     return 'hsl(var(--card-foreground))'; 
   }
@@ -61,13 +61,11 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
   const contentTextareaRef = useRef<HTMLTextAreaElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
 
-  const { theme } = useTheme(); // Get current theme
+  const { theme } = useTheme(); 
   const mainDialogTextColor = getTextColorForBackground(selectedColor);
 
   let toolbarIconColor = mainDialogTextColor;
   if (theme === 'dark' && mainDialogTextColor === '#000000') {
-    // In dark mode, if the note's background is light (making mainDialogTextColor black),
-    // we want the toolbar icons to be light. We use the theme's foreground color.
     toolbarIconColor = 'hsl(var(--foreground))';
   }
 
@@ -219,7 +217,7 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
               id="note-content"
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="Start typing your note here... (Supports Markdown for **bold**, *italic*, lists, and <u>underline</u> tags)"
+              placeholder="Supports Markdown: **bold**, *italic*, <u>underline</u>, and lists."
               className="min-h-[150px] text-sm bg-background/80 border-input focus:ring-primary focus:border-primary rounded-md p-3 text-foreground placeholder:text-muted-foreground"
             />
           </div>
@@ -317,7 +315,7 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
         </div>
         <DialogFooter className="sm:justify-end space-x-2 pt-2">
           <DialogClose asChild>
-            <Button type="button" variant="outline">
+            <Button type="button" variant="outline" style={{ color: toolbarIconColor }}>
               Cancel
             </Button>
           </DialogClose>
