@@ -16,9 +16,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
-import { Palette, Tags as TagsIconLucide, BoldIcon, UnderlineIcon, ListIcon, Check } from 'lucide-react'; // Updated imports
+import { Palette, Tags as TagsIconLucide, BoldIcon, UnderlineIcon, ListIcon, Check } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import type { Note, Tag } from '@/types';
+import { useTheme } from '@/hooks/use-theme'; // Added import
 
 interface NoteEditorDialogProps {
   isOpen: boolean;
@@ -60,7 +61,16 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
   const contentTextareaRef = useRef<HTMLTextAreaElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
 
-  const dialogTextColor = getTextColorForBackground(selectedColor);
+  const { theme } = useTheme(); // Get current theme
+  const mainDialogTextColor = getTextColorForBackground(selectedColor);
+
+  let toolbarIconColor = mainDialogTextColor;
+  if (theme === 'dark' && mainDialogTextColor === '#000000') {
+    // In dark mode, if the note's background is light (making mainDialogTextColor black),
+    // we want the toolbar icons to be light. We use the theme's foreground color.
+    toolbarIconColor = 'hsl(var(--foreground))';
+  }
+
 
   useEffect(() => {
     if (isOpen) {
@@ -157,7 +167,7 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
         }
         break;
       case 'underline':
-        wrapOrInsert('<u>', '</u>', '<u>', '</u>', 3);
+         wrapOrInsert('<u>', '</u>', '<u>', '</u>', 3);
         break;
     }
     
@@ -174,7 +184,7 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent 
         className="sm:max-w-[580px] bg-card shadow-xl rounded-lg"
-        style={{ backgroundColor: selectedColor, transition: 'background-color 0.3s ease', color: dialogTextColor }}
+        style={{ backgroundColor: selectedColor, transition: 'background-color 0.3s ease', color: mainDialogTextColor }}
         onPointerDownOutside={(e) => {
           if ((e.target as HTMLElement)?.closest('[data-radix-popper-content-wrapper]')) {
             e.preventDefault();
@@ -182,13 +192,13 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
         }}
       >
         <DialogHeader>
-          <DialogTitle className="text-lg font-semibold" style={{ color: dialogTextColor }}>
+          <DialogTitle className="text-lg font-semibold" style={{ color: mainDialogTextColor }}>
             {noteToEdit ? 'Edit Note' : 'Create New Note'}
           </DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
-            <Label htmlFor="note-title" className="text-sm font-medium" style={{ color: dialogTextColor === '#000000' ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.7)'}}>
+            <Label htmlFor="note-title" className="text-sm font-medium" style={{ color: mainDialogTextColor === '#000000' ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.7)'}}>
               Title
             </Label>
             <Input
@@ -201,7 +211,7 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
             />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="note-content" className="text-sm font-medium" style={{ color: dialogTextColor === '#000000' ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.7)'}}>
+            <Label htmlFor="note-content" className="text-sm font-medium" style={{ color: mainDialogTextColor === '#000000' ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.7)'}}>
               Content
             </Label>
             <Textarea
@@ -214,7 +224,7 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
             />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="note-tags" className="text-sm font-medium" style={{ color: dialogTextColor === '#000000' ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.7)'}}>
+            <Label htmlFor="note-tags" className="text-sm font-medium" style={{ color: mainDialogTextColor === '#000000' ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.7)'}}>
               Tags (comma-separated)
             </Label>
             <Input
@@ -236,7 +246,7 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
                   size="icon" 
                   aria-label="Change note color"
                   className="h-8 w-8"
-                  style={{ color: dialogTextColor }}
+                  style={{ color: toolbarIconColor }}
                 >
                   <Palette className="h-4 w-4" />
                 </Button>
@@ -266,7 +276,7 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
               onClick={() => document.getElementById('note-tags')?.focus()}
               aria-label="Edit tags"
               className="h-8 w-8"
-               style={{ color: dialogTextColor }}
+               style={{ color: toolbarIconColor }}
             >
               <TagsIconLucide className="h-4 w-4" />
             </Button>
@@ -279,7 +289,7 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
               onClick={() => handleFormatAction('bold')}
               aria-label="Bold text"
               className="h-8 w-8"
-               style={{ color: dialogTextColor }}
+               style={{ color: toolbarIconColor }}
             >
               <BoldIcon className="h-4 w-4" />
             </Button>
@@ -289,7 +299,7 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
               onClick={() => handleFormatAction('underline')}
               aria-label="Underline text"
               className="h-8 w-8"
-               style={{ color: dialogTextColor }}
+               style={{ color: toolbarIconColor }}
             >
               <UnderlineIcon className="h-4 w-4" />
             </Button>
@@ -299,7 +309,7 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
               onClick={() => handleFormatAction('list')}
               aria-label="List format"
               className="h-8 w-8"
-               style={{ color: dialogTextColor }}
+               style={{ color: toolbarIconColor }}
             >
               <ListIcon className="h-4 w-4" />
             </Button>
