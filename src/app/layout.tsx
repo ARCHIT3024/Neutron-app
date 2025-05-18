@@ -29,7 +29,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <SidebarProvider defaultOpen>
+        <SidebarProvider defaultOpen={false}> {/* Changed defaultOpen to false */}
           <AppSidebar />
           <SidebarInset>
             {children}
