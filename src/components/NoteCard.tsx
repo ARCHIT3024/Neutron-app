@@ -21,7 +21,8 @@ import {
   Loader2,
   Save,
   Archive,
-  RotateCcw, // For Restore
+  ArchiveRestore, // For Unarchive
+  RotateCcw, // For Restore from Trash
   Trash, // For Move to Trash
 } from 'lucide-react';
 import {
@@ -36,11 +37,11 @@ import Image from 'next/image';
 interface NoteCardProps {
   note: Note;
   onUpdate: (id: string, updates: Partial<Note>) => void;
-  onTrash?: (id: string) => void; // Moves to trash from active/archive
+  onTrash?: (id: string) => void; // Moves to trash (from active OR archive)
   onRestore?: (id: string) => void; // Restores from trash to active
   onDeletePermanently?: (id: string) => void; // Deletes forever from trash
-  // onArchive?: (id: string) => void; // Placeholder for future
-  // onUnarchive?: (id: string) => void; // Placeholder for future
+  onArchive?: (id: string) => void; // Moves from active to archive
+  onUnarchive?: (id: string) => void; // Moves from archive to active
 }
 
 // Utility to get contrasting text color (simplified)
@@ -58,7 +59,9 @@ export default function NoteCard({
   onUpdate, 
   onTrash,
   onRestore,
-  onDeletePermanently 
+  onDeletePermanently,
+  onArchive,
+  onUnarchive,
 }: NoteCardProps) {
   const [content, setContent] = useState(note.content);
   const [isEditing, setIsEditing] = useState(false);
@@ -77,10 +80,14 @@ export default function NoteCard({
   };
 
   const handleTextareaFocus = () => {
-    setIsEditing(true);
+    if (note.status === 'active') {
+      setIsEditing(true);
+    }
   };
 
   const handleSave = () => {
+    if (note.status !== 'active') return; // Should not happen if textarea is disabled
+
     if (content !== note.content) {
       onUpdate(note.id, { content, updatedAt: new Date().toISOString() });
       toast({ title: "Note Saved!", description: "Your changes have been saved." });
@@ -89,6 +96,7 @@ export default function NoteCard({
   };
   
   const handleTogglePin = () => {
+    if (note.status !== 'active') return;
     onUpdate(note.id, { isPinned: !note.isPinned, updatedAt: new Date().toISOString() });
      toast({
       title: note.isPinned ? "Note Unpinned" : "Note Pinned",
@@ -97,6 +105,7 @@ export default function NoteCard({
   };
 
   const handleSummarize = async () => {
+    if (note.status !== 'active') return;
     if (!note.content.trim()) {
       toast({ title: 'Cannot summarize', description: 'Note content is empty.', variant: 'destructive' });
       return;
@@ -122,7 +131,7 @@ export default function NoteCard({
     }
   };
 
-  const isTrashContext = !!(onRestore && onDeletePermanently);
+  const isEditable = note.status === 'active';
 
   return (
     <Card
@@ -132,12 +141,12 @@ export default function NoteCard({
       aria-labelledby={`note-title-${note.id}`}
     >
       <CardHeader className="flex flex-row items-start justify-between p-4">
-        <span id={`note-title-${note.id}`} className="sr-only">Note {note.id}</span>
+        <span id={`note-title-${note.id}`} className="sr-only">Note {note.id}, Status: {note.status}</span>
         <div className="flex-1 min-w-0">
           {/* Placeholder for visible title or editable title */}
         </div>
         <div className="flex items-center space-x-1">
-          {note.status === 'active' && ( // Pinning only makes sense for active notes
+          {note.status === 'active' && ( 
             <Button 
               variant="ghost" 
               size="icon" 
@@ -164,7 +173,8 @@ export default function NoteCard({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              {!isTrashContext && (
+              {/* Active Note Actions */}
+              {note.status === 'active' && (
                 <>
                   <DropdownMenuItem onSelect={() => alert('Color picker not implemented yet.')} aria-hidden="true">
                     <Palette className="mr-2 h-4 w-4" aria-hidden="true" /> Change Color
@@ -175,9 +185,11 @@ export default function NoteCard({
                   <DropdownMenuItem onSelect={() => alert('Image attachment not implemented yet.')} aria-hidden="true">
                     <ImagePlus className="mr-2 h-4 w-4" aria-hidden="true" /> Attach Image
                   </DropdownMenuItem>
-                   <DropdownMenuItem onSelect={() => alert('Archive not implemented yet.')} aria-hidden="true">
-                    <Archive className="mr-2 h-4 w-4" aria-hidden="true" /> Archive
-                  </DropdownMenuItem>
+                  {onArchive && (
+                    <DropdownMenuItem onSelect={() => onArchive(note.id)}>
+                      <Archive className="mr-2 h-4 w-4" aria-hidden="true" /> Archive
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem onSelect={handleSummarize} disabled={isSummarizing || !note.content.trim()}>
                     {isSummarizing ? (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
@@ -194,15 +206,37 @@ export default function NoteCard({
                   )}
                 </>
               )}
-              {isTrashContext && onRestore && (
-                <DropdownMenuItem onSelect={() => onRestore(note.id)}>
-                  <RotateCcw className="mr-2 h-4 w-4" aria-hidden="true" /> Restore Note
-                </DropdownMenuItem>
+
+              {/* Archived Note Actions */}
+              {note.status === 'archived' && (
+                <>
+                  {onUnarchive && (
+                    <DropdownMenuItem onSelect={() => onUnarchive(note.id)}>
+                      <ArchiveRestore className="mr-2 h-4 w-4" aria-hidden="true" /> Unarchive
+                    </DropdownMenuItem>
+                  )}
+                  {onTrash && ( // Move from Archive to Trash
+                    <DropdownMenuItem onSelect={() => onTrash(note.id)}>
+                      <Trash className="mr-2 h-4 w-4" aria-hidden="true" /> Move to Trash
+                    </DropdownMenuItem>
+                  )}
+                </>
               )}
-              {isTrashContext && onDeletePermanently && (
-                 <DropdownMenuItem onSelect={() => onDeletePermanently(note.id)} className="text-destructive focus:text-destructive focus:bg-destructive/10">
-                  <Trash2 className="mr-2 h-4 w-4" aria-hidden="true" /> Delete Permanently
-                </DropdownMenuItem>
+
+              {/* Trashed Note Actions */}
+              {note.status === 'trashed' && (
+                <>
+                  {onRestore && (
+                    <DropdownMenuItem onSelect={() => onRestore(note.id)}>
+                      <RotateCcw className="mr-2 h-4 w-4" aria-hidden="true" /> Restore Note
+                    </DropdownMenuItem>
+                  )}
+                  {onDeletePermanently && (
+                     <DropdownMenuItem onSelect={() => onDeletePermanently(note.id)} className="text-destructive focus:text-destructive focus:bg-destructive/10">
+                      <Trash2 className="mr-2 h-4 w-4" aria-hidden="true" /> Delete Permanently
+                    </DropdownMenuItem>
+                  )}
+                </>
               )}
             </DropdownMenuContent>
           </DropdownMenu>
@@ -210,7 +244,7 @@ export default function NoteCard({
       </CardHeader>
       <CardContent className="p-4 flex-1">
         <div 
-          className={`relative p-0.5 rounded-md transition-all duration-200 ease-in-out ${isEditing ? 'ring-2 ring-primary/70 shadow-md' : 'ring-0 ring-transparent'}`}
+          className={`relative p-0.5 rounded-md transition-all duration-200 ease-in-out ${isEditing && isEditable ? 'ring-2 ring-primary/70 shadow-md' : 'ring-0 ring-transparent'}`}
         >
           <Textarea
             ref={textareaRef}
@@ -223,7 +257,7 @@ export default function NoteCard({
             style={{ backgroundColor: 'transparent', color: textColor }}
             aria-label={`Note content for note ${note.id}`}
             aria-describedby={`note-meta-${note.id}`}
-            disabled={isTrashContext} // Disable editing in trash context
+            disabled={!isEditable}
           />
         </div>
         {note.imageUrl && (
@@ -239,8 +273,8 @@ export default function NoteCard({
         )}
       </CardContent>
       <CardFooter className="p-4 flex flex-col items-start space-y-2 text-xs" id={`note-meta-${note.id}`}>
-        <div className={`transition-all duration-300 ease-in-out ${isEditing && !isTrashContext ? 'opacity-100 translate-y-0 h-auto' : 'opacity-0 -translate-y-2 h-0 pointer-events-none overflow-hidden'}`}>
-          {isEditing && !isTrashContext && ( 
+        <div className={`transition-all duration-300 ease-in-out ${isEditing && isEditable ? 'opacity-100 translate-y-0 h-auto' : 'opacity-0 -translate-y-2 h-0 pointer-events-none overflow-hidden'}`}>
+          {isEditing && isEditable && ( 
             <Button size="sm" onClick={handleSave} className="self-start mt-2" variant="default" aria-label={`Save changes to note ${note.id}`}>
                 <Save className="mr-2 h-4 w-4" aria-hidden="true" /> Save
             </Button>
@@ -261,7 +295,12 @@ export default function NoteCard({
         <p className="opacity-70 self-end text-xs mt-1">
           Updated: <time dateTime={note.updatedAt}>{new Date(note.updatedAt).toLocaleDateString()}</time>
         </p>
-         {isTrashContext && note.trashedAt && (
+         {note.status === 'archived' && note.archivedAt && (
+          <p className="opacity-70 self-end text-xs mt-1 text-muted-foreground">
+            Archived: <time dateTime={note.archivedAt}>{new Date(note.archivedAt).toLocaleDateString()}</time>
+          </p>
+        )}
+         {note.status === 'trashed' && note.trashedAt && (
           <p className="opacity-70 self-end text-xs mt-1 text-destructive">
             Trashed: <time dateTime={note.trashedAt}>{new Date(note.trashedAt).toLocaleDateString()}</time>
           </p>

@@ -112,12 +112,24 @@ export default function HomePage() {
   const handleTrashNote = (id: string) => {
     setAllNotes((prevNotes) =>
       prevNotes.map((note) =>
-        note.id === id ? { ...note, status: 'trashed', trashedAt: new Date().toISOString(), updatedAt: new Date().toISOString() } : note
+        note.id === id ? { ...note, status: 'trashed', trashedAt: new Date().toISOString(), archivedAt: null, updatedAt: new Date().toISOString() } : note
       )
     );
     toast({
       title: "Note Moved to Trash",
       description: "The note has been moved to the trash.",
+    });
+  };
+
+  const handleArchiveNote = (id: string) => {
+    setAllNotes((prevNotes) =>
+      prevNotes.map((note) =>
+        note.id === id ? { ...note, status: 'archived', archivedAt: new Date().toISOString(), trashedAt: null, updatedAt: new Date().toISOString() } : note
+      )
+    );
+    toast({
+      title: "Note Archived",
+      description: "The note has been moved to the archive.",
     });
   };
   
@@ -164,6 +176,7 @@ export default function HomePage() {
                 note={note}
                 onUpdate={handleUpdateNote}
                 onTrash={handleTrashNote}
+                onArchive={handleArchiveNote}
               />
             ))}
           </div>
@@ -185,7 +198,7 @@ const StickyNoteIcon = (props: React.SVGProps<SVGSVGElement>) => (
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
-    aria-hidden="true" // Added for decorative icon
+    aria-hidden="true" 
     {...props}
   >
     <path d="M15.5 3H5a2 2 0 0 0-2 2v14c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2V8.5L15.5 3Z" />
