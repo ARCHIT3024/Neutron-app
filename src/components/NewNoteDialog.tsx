@@ -27,7 +27,30 @@ interface NoteEditorDialogProps {
   noteToEdit?: Note | null;
 }
 
-const PRESET_COLORS = ['#FFFFFF', '#FFFACD', '#ADD8E6', '#90EE90', '#FFB6C1', '#FFDAB9', '#E6E6FA'];
+const PRESET_COLORS_MAP: Record<string, string> = {
+  '#FFFFFF': 'White',
+  '#FFFACD': 'Lemon Chiffon',
+  '#ADD8E6': 'Light Blue',
+  '#90EE90': 'Light Green',
+  '#FFB6C1': 'Light Pink',
+  '#FFDAB9': 'Peach',
+  '#E6E6FA': 'Lavender',
+};
+const PRESET_COLORS = Object.keys(PRESET_COLORS_MAP);
+
+// Helper to determine if text color should be light or dark based on background
+const getTextColorForBackground = (bgColor?: string): string => {
+  if (!bgColor || !bgColor.startsWith('#') || bgColor.length < 7) return 'hsl(var(--card-foreground))'; 
+  try {
+    const r = parseInt(bgColor.slice(1, 3), 16);
+    const g = parseInt(bgColor.slice(3, 5), 16);
+    const b = parseInt(bgColor.slice(5, 7), 16);
+    const hsp = Math.sqrt(0.299 * (r * r) + 0.587 * (g * g) + 0.114 * (b * b));
+    return hsp > 127.5 ? '#000000' : '#FFFFFF'; // If light background, use dark text, else light text
+  } catch (e) {
+    return 'hsl(var(--card-foreground))'; 
+  }
+};
 
 const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, noteToEdit }) => {
   const [title, setTitle] = useState('');
@@ -37,24 +60,26 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
   const contentTextareaRef = useRef<HTMLTextAreaElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
 
+  const dialogTextColor = getTextColorForBackground(selectedColor);
+
   useEffect(() => {
     if (isOpen) {
       if (noteToEdit) {
         setTitle(noteToEdit.title || '');
         setContent(noteToEdit.content);
         setSelectedColor(noteToEdit.color || PRESET_COLORS[0]);
-        setTagsString(noteToEdit.tags.map(tag => tag.name).join(', '));
-        // Auto-focus content for existing notes, at the end of the text
+        setTagsString(noteToEdit.tags?.map(tag => tag.name).join(', ') || '');
         setTimeout(() => {
             contentTextareaRef.current?.focus();
-            contentTextareaRef.current?.setSelectionRange(contentTextareaRef.current.value.length, contentTextareaRef.current.value.length);
+            if (contentTextareaRef.current) {
+             contentTextareaRef.current.setSelectionRange(contentTextareaRef.current.value.length, contentTextareaRef.current.value.length);
+            }
         }, 100);
       } else {
         setTitle('');
         setContent('');
         setSelectedColor(PRESET_COLORS[0]);
         setTagsString('');
-        // Auto-focus title for new notes
         setTimeout(() => {
             titleInputRef.current?.focus();
         }, 100);
@@ -76,7 +101,6 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
       color: selectedColor,
       tags: parsedTags,
     });
-    // onClose(); // Closing is now handled by the Page component after save
   };
 
   const handleOpenChange = (open: boolean) => {
@@ -95,14 +119,22 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
     let newContent = content;
     let cursorPosition = selectionStart;
 
+    const insertText = (textToInsert: string, cursorPosOffset: number) => {
+        newContent = `${content.substring(0, selectionStart)}${textToInsert}${content.substring(selectionEnd)}`;
+        cursorPosition = selectionStart + cursorPosOffset;
+    };
+    
+    const wrapText = (prefix: string, suffix: string) => {
+        newContent = `${content.substring(0, selectionStart)}${prefix}${selectedText}${suffix}${content.substring(selectionEnd)}`;
+        cursorPosition = selectionEnd + prefix.length + suffix.length;
+    };
+
     switch (type) {
       case 'bold':
         if (selectedText) {
-          newContent = `${content.substring(0, selectionStart)}**${selectedText}**${content.substring(selectionEnd)}`;
-          cursorPosition = selectionEnd + 4; // After closing **
+          wrapText('**', '**');
         } else {
-          newContent = `${content.substring(0, selectionStart)}****${content.substring(selectionEnd)}`;
-          cursorPosition = selectionStart + 2; // Inside ****
+          insertText('****', 2); // Cursor in the middle of ****
         }
         break;
       case 'list':
@@ -114,24 +146,20 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
         } else {
           const currentLineStart = content.lastIndexOf('\n', selectionStart -1) + 1;
           const prefix = (currentLineStart === 0 || content.charAt(currentLineStart-1) === '\n') && selectionStart !== 0 ? '' : '\n';
-          newContent = `${content.substring(0, selectionStart)}${prefix}* ${content.substring(selectionEnd)}`;
-          cursorPosition = selectionStart + prefix.length + 2; // After "* "
+          insertText(`${prefix}* `, prefix.length + 2); // After "* "
         }
         break;
       case 'underline':
-        if (selectedText) {
-          newContent = `${content.substring(0, selectionStart)}<u>${selectedText}</u>${content.substring(selectionEnd)}`;
-          cursorPosition = selectionEnd + 7; // After </u> 
+         if (selectedText) {
+          wrapText('<u>', '</u>');
         } else {
-          newContent = `${content.substring(0, selectionStart)}<u></u>${content.substring(selectionEnd)}`;
-          cursorPosition = selectionStart + 3; // Inside <u></u>
+          insertText('<u></u>', 3); // Cursor in the middle of <u></u>
         }
         break;
     }
     
     setContent(newContent);
     
-    // Refocus and set cursor position
     setTimeout(() => {
       textarea.focus();
       textarea.setSelectionRange(cursorPosition, cursorPosition);
@@ -143,7 +171,7 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent 
         className="sm:max-w-[580px] bg-card shadow-xl rounded-lg"
-        style={{ backgroundColor: selectedColor, transition: 'background-color 0.3s ease' }}
+        style={{ backgroundColor: selectedColor, transition: 'background-color 0.3s ease', color: dialogTextColor }}
         onPointerDownOutside={(e) => {
           if ((e.target as HTMLElement)?.closest('[data-radix-popper-content-wrapper]')) {
             e.preventDefault();
@@ -151,13 +179,13 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
         }}
       >
         <DialogHeader>
-          <DialogTitle className="text-lg font-semibold text-card-foreground">
+          <DialogTitle className="text-lg font-semibold" style={{ color: dialogTextColor }}>
             {noteToEdit ? 'Edit Note' : 'Create New Note'}
           </DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
-            <Label htmlFor="note-title" className="text-sm font-medium text-card-foreground/80">
+            <Label htmlFor="note-title" className="text-sm font-medium" style={{ color: dialogTextColor === '#000000' ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.7)'}}>
               Title
             </Label>
             <Input
@@ -166,11 +194,11 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Note Title"
-              className="text-base bg-background/80 border-border focus:ring-primary focus:border-primary rounded-md p-3"
+              className="text-base bg-background/80 border-input focus:ring-primary focus:border-primary rounded-md p-3 text-foreground placeholder:text-muted-foreground"
             />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="note-content" className="text-sm font-medium text-card-foreground/80">
+            <Label htmlFor="note-content" className="text-sm font-medium" style={{ color: dialogTextColor === '#000000' ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.7)'}}>
               Content
             </Label>
             <Textarea
@@ -178,12 +206,12 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
               id="note-content"
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="Start typing your note here... (Supports Markdown for **bold**, *italic*, lists, and &lt;u&gt;underline&lt;/u&gt;)"
-              className="min-h-[150px] text-sm bg-background/80 border-border focus:ring-primary focus:border-primary rounded-md p-3"
+              placeholder="Start typing your note here... (Supports Markdown for **bold**, *italic*, lists, and <u>underline</u>)"
+              className="min-h-[150px] text-sm bg-background/80 border-input focus:ring-primary focus:border-primary rounded-md p-3 text-foreground placeholder:text-muted-foreground"
             />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="note-tags" className="text-sm font-medium text-card-foreground/80">
+            <Label htmlFor="note-tags" className="text-sm font-medium" style={{ color: dialogTextColor === '#000000' ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.7)'}}>
               Tags (comma-separated)
             </Label>
             <Input
@@ -191,7 +219,7 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
               value={tagsString}
               onChange={(e) => setTagsString(e.target.value)}
               placeholder="e.g., work, important, idea"
-              className="text-sm bg-background/80 border-border focus:ring-primary focus:border-primary rounded-md p-3"
+              className="text-sm bg-background/80 border-input focus:ring-primary focus:border-primary rounded-md p-3 text-foreground placeholder:text-muted-foreground"
             />
           </div>
           
@@ -204,7 +232,8 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
                   variant="outline" 
                   size="icon" 
                   aria-label="Change note color"
-                  className="h-8 w-8 bg-background/80 hover:bg-background"
+                  className="h-8 w-8 bg-background/80 hover:bg-background text-foreground"
+                  style={{ color: dialogTextColor }}
                 >
                   <Palette className="h-4 w-4" />
                 </Button>
@@ -219,7 +248,7 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
                       className="h-7 w-7 rounded-full p-0 border-2"
                       style={{ backgroundColor: color, borderColor: selectedColor === color ? 'hsl(var(--primary))' : 'hsl(var(--border))' }}
                       onClick={() => setSelectedColor(color)}
-                      aria-label={`Set color to ${color}`}
+                      aria-label={`Set color to ${PRESET_COLORS_MAP[color] || color}`}
                     >
                       {selectedColor === color && <Check className="h-4 w-4" style={{ color: getTextColorForBackground(color) }}/>}
                     </Button>
@@ -233,7 +262,8 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
               size="icon" 
               onClick={() => document.getElementById('note-tags')?.focus()}
               aria-label="Edit tags"
-              className="h-8 w-8 bg-background/80 hover:bg-background"
+              className="h-8 w-8 bg-background/80 hover:bg-background text-foreground"
+               style={{ color: dialogTextColor }}
             >
               <TagsIconLucide className="h-4 w-4" />
             </Button>
@@ -245,7 +275,8 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
               size="icon" 
               onClick={() => handleFormatAction('bold')}
               aria-label="Bold text"
-              className="h-8 w-8 bg-background/80 hover:bg-background"
+              className="h-8 w-8 bg-background/80 hover:bg-background text-foreground"
+               style={{ color: dialogTextColor }}
             >
               <Bold className="h-4 w-4" />
             </Button>
@@ -254,7 +285,8 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
               size="icon" 
               onClick={() => handleFormatAction('underline')}
               aria-label="Underline text"
-              className="h-8 w-8 bg-background/80 hover:bg-background"
+              className="h-8 w-8 bg-background/80 hover:bg-background text-foreground"
+               style={{ color: dialogTextColor }}
             >
               <Underline className="h-4 w-4" />
             </Button>
@@ -263,7 +295,8 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
               size="icon" 
               onClick={() => handleFormatAction('list')}
               aria-label="List format"
-              className="h-8 w-8 bg-background/80 hover:bg-background"
+              className="h-8 w-8 bg-background/80 hover:bg-background text-foreground"
+               style={{ color: dialogTextColor }}
             >
               <List className="h-4 w-4" />
             </Button>
@@ -271,7 +304,7 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
         </div>
         <DialogFooter className="sm:justify-end space-x-2 pt-2">
           <DialogClose asChild>
-            <Button type="button" variant="outline" className="bg-background/80 hover:bg-background">
+            <Button type="button" variant="outline" className="bg-background/80 hover:bg-background text-foreground">
               Cancel
             </Button>
           </DialogClose>
@@ -284,22 +317,6 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
   );
 };
 
-// Helper to determine if text color should be light or dark based on background
-const getTextColorForBackground = (bgColor?: string): string => {
-  if (!bgColor || !bgColor.startsWith('#') || bgColor.length < 7) return 'hsl(var(--foreground))'; // Default if color is invalid
-  try {
-    const r = parseInt(bgColor.slice(1, 3), 16);
-    const g = parseInt(bgColor.slice(3, 5), 16);
-    const b = parseInt(bgColor.slice(5, 7), 16);
-    // HSP (Highly Sensitive Poo) equation from http://alienryderflex.com/hsp.html
-    const hsp = Math.sqrt(0.299 * (r * r) + 0.587 * (g * g) + 0.114 * (b * b));
-    // Using hsp to determine text color
-    return hsp > 127.5 ? '#000000' : '#FFFFFF'; // If light background, use dark text, else light text
-  } catch (e) {
-    // Fallback in case of parsing error
-    return 'hsl(var(--foreground))'; 
-  }
-};
 
 export default NoteEditorDialog;
     

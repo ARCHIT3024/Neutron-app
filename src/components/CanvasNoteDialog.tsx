@@ -15,7 +15,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from '@/components/ui/label';
 import CanvasEditor from '@/components/CanvasEditor';
-import type { Note } from '@/types';
+import type { Note } from '@/types'; // Ensure Tag is imported if not already
+import type { Tag } from '@/types'; // Explicitly import Tag if it's separate
 
 interface CanvasNoteDialogProps {
   isOpen: boolean;
@@ -24,14 +25,22 @@ interface CanvasNoteDialogProps {
   noteToEdit?: Note | null;
 }
 
-const PRESET_COLORS = ['#FFFFFF', '#FFFACD', '#ADD8E6', '#90EE90', '#FFB6C1', '#FFDAB9', '#E6E6FA']; // For card background
+const PRESET_COLORS_MAP: Record<string, string> = {
+  '#FFFFFF': 'White',
+  '#FFFACD': 'Lemon Chiffon',
+  '#ADD8E6': 'Light Blue',
+  '#90EE90': 'Light Green',
+  '#FFB6C1': 'Light Pink',
+  '#FFDAB9': 'Peach',
+  '#E6E6FA': 'Lavender',
+};
+const PRESET_COLORS = Object.keys(PRESET_COLORS_MAP);
+
 
 const CanvasNoteDialog: FC<CanvasNoteDialogProps> = ({ isOpen, onClose, onSave, noteToEdit }) => {
   const [title, setTitle] = useState('');
   const getCanvasDataRef = useRef<() => string | undefined>();
   const titleInputRef = useRef<HTMLInputElement>(null);
-  // For canvas notes, color from NewNoteDialog might be for the card background.
-  // Canvas editor itself will have a white background.
   const [selectedCardColor, setSelectedCardColor] = useState<string>(PRESET_COLORS[0]);
   const [tagsString, setTagsString] = useState<string>('');
 
@@ -42,13 +51,11 @@ const CanvasNoteDialog: FC<CanvasNoteDialogProps> = ({ isOpen, onClose, onSave, 
         setTitle(noteToEdit.title || '');
         setSelectedCardColor(noteToEdit.color || PRESET_COLORS[0]);
         setTagsString(noteToEdit.tags?.map(tag => tag.name).join(', ') || '');
-        // Auto-focus title for existing canvas notes
         setTimeout(() => titleInputRef.current?.focus(), 100);
       } else {
         setTitle('');
-        setSelectedCardColor(PRESET_COLORS[0]); // Default card background
+        setSelectedCardColor(PRESET_COLORS[0]); 
         setTagsString('');
-        // Auto-focus title for new canvas notes
         setTimeout(() => titleInputRef.current?.focus(), 100);
       }
     }
@@ -58,7 +65,6 @@ const CanvasNoteDialog: FC<CanvasNoteDialogProps> = ({ isOpen, onClose, onSave, 
     const canvasData = getCanvasDataRef.current?.();
     if (!canvasData) {
       console.error("Canvas data is not available");
-      // Optionally show a toast message to the user
       return;
     }
     
@@ -72,7 +78,7 @@ const CanvasNoteDialog: FC<CanvasNoteDialogProps> = ({ isOpen, onClose, onSave, 
       id: noteToEdit?.id,
       title,
       canvasData,
-      color: selectedCardColor, // This color is for the NoteCard background
+      color: selectedCardColor, 
       tags: parsedTags,
     });
   };
@@ -102,7 +108,7 @@ const CanvasNoteDialog: FC<CanvasNoteDialogProps> = ({ isOpen, onClose, onSave, 
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Canvas Note Title"
-              className="text-base bg-background/80 border-input focus:ring-primary focus:border-primary rounded-md p-3"
+              className="text-base bg-background/80 border-input focus:ring-primary focus:border-primary rounded-md p-3 text-foreground placeholder:text-muted-foreground"
             />
           </div>
           
@@ -111,22 +117,20 @@ const CanvasNoteDialog: FC<CanvasNoteDialogProps> = ({ isOpen, onClose, onSave, 
             getCanvasDataRef={getCanvasDataRef}
           />
 
-          {/* Card Background Color and Tags for Canvas Note Card Styling */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
              <div className="grid gap-2">
                 <Label htmlFor="canvas-note-card-color" className="text-sm font-medium text-card-foreground/80">
                 Card Background Color
                 </Label>
-                {/* Simple select for now, could be enhanced with color swatches later */}
                 <select 
                     id="canvas-note-card-color" 
                     value={selectedCardColor} 
                     onChange={(e) => setSelectedCardColor(e.target.value)}
-                    className="text-sm bg-background/80 border-input focus:ring-primary focus:border-primary rounded-md p-3"
+                    className="text-sm bg-background/80 border-input focus:ring-primary focus:border-primary rounded-md p-3 text-foreground"
                 >
                     {PRESET_COLORS.map(color => (
-                        <option key={color} value={color} style={{backgroundColor: color}}>
-                           {color} {/* Could show color name or just hex */}
+                        <option key={color} value={color}>
+                           {PRESET_COLORS_MAP[color] || color}
                         </option>
                     ))}
                 </select>
@@ -140,7 +144,7 @@ const CanvasNoteDialog: FC<CanvasNoteDialogProps> = ({ isOpen, onClose, onSave, 
                 value={tagsString}
                 onChange={(e) => setTagsString(e.target.value)}
                 placeholder="e.g., sketch, idea"
-                className="text-sm bg-background/80 border-input focus:ring-primary focus:border-primary rounded-md p-3"
+                className="text-sm bg-background/80 border-input focus:ring-primary focus:border-primary rounded-md p-3 text-foreground placeholder:text-muted-foreground"
               />
             </div>
           </div>
@@ -148,7 +152,7 @@ const CanvasNoteDialog: FC<CanvasNoteDialogProps> = ({ isOpen, onClose, onSave, 
         </div>
         <DialogFooter className="sm:justify-end space-x-2 pt-2">
           <DialogClose asChild>
-            <Button type="button" variant="outline" className="bg-background/80 hover:bg-background">
+            <Button type="button" variant="outline" className="bg-background/80 hover:bg-background text-foreground">
               Cancel
             </Button>
           </DialogClose>
@@ -161,11 +165,6 @@ const CanvasNoteDialog: FC<CanvasNoteDialogProps> = ({ isOpen, onClose, onSave, 
   );
 };
 
-// Minimal Tag interface for CanvasNoteDialog context
-interface Tag {
-  id: string;
-  name: string;
-}
-
 
 export default CanvasNoteDialog;
+
