@@ -1,4 +1,8 @@
+
+"use client"; // Add this directive for usePathname
+
 import Link from 'next/link';
+import { usePathname } from 'next/navigation'; // Import usePathname
 import {
   Sidebar,
   SidebarHeader,
@@ -7,12 +11,13 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarFooter,
-  // SidebarTrigger, // Removed as it's not explicitly used here for mobile, page header handles it.
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Home, Archive, Trash2, StickyNote, Settings, LogOut } from 'lucide-react';
 
 export default function AppSidebar() {
+  const pathname = usePathname(); // Get the current path
+
   return (
     <Sidebar collapsible="icon" variant="sidebar" side="left">
       <SidebarHeader className="h-16 flex items-center justify-between p-2">
@@ -34,7 +39,7 @@ export default function AppSidebar() {
               asChild
               tooltip={{ children: 'Home', side: 'right', align: 'center' }}
               aria-label="Home"
-              isActive // Assuming home is active by default
+              isActive={pathname === '/'} 
             >
               <Link href="/">
                 <Home />
@@ -47,6 +52,7 @@ export default function AppSidebar() {
               asChild
               tooltip={{ children: 'Archive', side: 'right', align: 'center' }}
               aria-label="Archive"
+              isActive={pathname === '/archive'} 
             >
               <Link href="/archive">
                 <Archive />
@@ -59,6 +65,7 @@ export default function AppSidebar() {
               asChild
               tooltip={{ children: 'Trash', side: 'right', align: 'center' }}
               aria-label="Trash"
+              isActive={pathname === '/trash'} 
             >
               <Link href="/trash">
                 <Trash2 />
@@ -75,6 +82,7 @@ export default function AppSidebar() {
               asChild
               tooltip={{ children: 'Settings', side: 'right', align: 'center' }}
               aria-label="Settings"
+              isActive={pathname === '/settings'}
             >
               <Link href="/settings">
                 <Settings />
