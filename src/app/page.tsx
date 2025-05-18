@@ -2,25 +2,25 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import type { Note, Tag } from '@/types'; // Ensure Tag is imported
+import type { Note, Tag } from '@/types'; 
 import NoteCard from '@/components/NoteCard';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Loader2 } from 'lucide-react';
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 import { useToast } from '@/hooks/use-toast';
-import NewNoteDialog from '@/components/NewNoteDialog';
+import NoteEditorDialog from '@/components/NewNoteDialog'; // Corrected import path
 
 const initialNotesData: Note[] = [
   {
     id: '1',
     title: 'Welcome to StickyCanvas!',
-    content: 'This is your first note. Click the title or content to edit, or use the menu for more options.\n\n**Try this:**\n* Edit me!\n* Pin me!',
-    color: '#FFFACD', // LemonChiffon
+    content: 'This is your first note. You can edit me by clicking on my title or content.\n\n**Try this:**\n* Edit me!\n* Pin me!\n* Explore Markdown formatting like **bold** and *italic* text, or create lists.\n* Change my color or add tags via the editor!',
+    color: '#FFFACD', 
     tags: [{ id: 'tag1', name: 'Welcome' }],
     isPinned: false,
     imageUrl: 'https://placehold.co/600x400.png',
     dataAiHint: 'welcome abstract',
-    createdAt: new Date(Date.now() - 86400000).toISOString(), // Yesterday
+    createdAt: new Date(Date.now() - 86400000).toISOString(), 
     updatedAt: new Date().toISOString(),
     status: 'active',
     archivedAt: null,
@@ -29,8 +29,8 @@ const initialNotesData: Note[] = [
   {
     id: '2',
     title: 'Pin Important Notes',
-    content: 'Pin important notes to keep them at the top! This note is pinned.\nYou can also add tags and change colors.',
-    color: '#ADD8E6', // LightBlue
+    content: 'Pin important notes to keep them at the top! This note is pinned.\nYou can also add tags and change colors using the editor (click me to open).\n\n- Item 1\n- Item 2: *italic text here*',
+    color: '#ADD8E6', 
     tags: [{ id: 'tag2', name: 'Tip' }, {id: 'tag3', name: 'Important'}],
     isPinned: true,
     createdAt: new Date().toISOString(),
@@ -41,9 +41,9 @@ const initialNotesData: Note[] = [
   },
   {
     id: '3',
-    title: 'AI Summarization Tip',
-    content: 'Try summarizing a long note with the AI Sparkles icon in the menu. It helps to get a quick overview. This is particularly useful for notes with a lot of text content that you want to quickly digest.',
-    color: '#90EE90', // LightGreen
+    title: 'AI Summarization & More',
+    content: 'Try summarizing a long note with the AI Sparkles icon in the Note Card menu. It helps to get a quick overview. This is particularly useful for notes with a lot of text content that you want to quickly digest.\n\nHere is a longer sentence to test the summarization. The quick brown fox jumps over the lazy dog near the bank of the river. This is a classic pangram used to test typefaces.\n\n**Markdown Examples:**\n* Bullet point 1\n* Bullet point 2\n  * Nested bullet point\n\n1. Numbered list item 1\n2. Numbered list item 2',
+    color: '#90EE90', 
     tags: [{ id: 'tag4', name: 'Feature' }, {id: 'tag5', name: 'AI'}],
     isPinned: false,
     createdAt: new Date().toISOString(),
@@ -59,7 +59,8 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true);
   const { isMobile } = useSidebar();
   const { toast } = useToast();
-  const [isNewNoteDialogOpen, setIsNewNoteDialogOpen] = useState(false); 
+  const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false); 
+  const [editingNote, setEditingNote] = useState<Note | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -91,31 +92,60 @@ export default function HomePage() {
 
 
   const handleOpenNewNoteDialog = () => {
-    setIsNewNoteDialogOpen(true);
+    setEditingNote(null); 
+    setIsNoteDialogOpen(true);
   };
 
-  const handleSaveNewNote = (title: string, content: string, color: string, tags: Tag[]) => {
-    const newNote: Note = {
-      id: crypto.randomUUID(),
-      title: title, 
-      content: content, 
-      color: color, 
-      tags: tags,
-      isPinned: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      status: 'active',
-      archivedAt: null,
-      trashedAt: null,
-    };
-    setAllNotes((prevNotes) => [newNote, ...prevNotes]);
-    toast({
-      title: "Note Created",
-      description: "Your new note has been added to the board.",
-    });
+  const handleOpenEditNoteDialog = (note: Note) => {
+    setEditingNote(note);
+    setIsNoteDialogOpen(true);
   };
 
-  const handleUpdateNote = (id: string, updates: Partial<Note>) => {
+  const handleSaveNote = (noteData: { id?: string; title: string; content: string; color: string; tags: Tag[] }) => {
+    if (noteData.id) { // Existing note
+      setAllNotes((prevNotes) =>
+        prevNotes.map((note) =>
+          note.id === noteData.id 
+            ? { 
+                ...note, 
+                title: noteData.title, 
+                content: noteData.content, 
+                color: noteData.color, 
+                tags: noteData.tags,
+                updatedAt: new Date().toISOString() 
+              } 
+            : note
+        )
+      );
+      toast({
+        title: "Note Updated",
+        description: "Your note has been successfully updated.",
+      });
+    } else { // New note
+      const newNote: Note = {
+        id: crypto.randomUUID(),
+        title: noteData.title, 
+        content: noteData.content, 
+        color: noteData.color, 
+        tags: noteData.tags,
+        isPinned: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        status: 'active',
+        archivedAt: null,
+        trashedAt: null,
+      };
+      setAllNotes((prevNotes) => [newNote, ...prevNotes]);
+      toast({
+        title: "Note Created",
+        description: "Your new note has been added to the board.",
+      });
+    }
+    setIsNoteDialogOpen(false);
+    setEditingNote(null);
+  };
+
+  const handleUpdateNoteMeta = (id: string, updates: Partial<Note>) => {
     setAllNotes((prevNotes) =>
       prevNotes.map((note) =>
         note.id === id ? { ...note, ...updates, updatedAt: new Date().toISOString() } : note
@@ -188,7 +218,8 @@ export default function HomePage() {
               <NoteCard
                 key={note.id}
                 note={note}
-                onUpdate={handleUpdateNote}
+                onEdit={() => handleOpenEditNoteDialog(note)}
+                onUpdate={handleUpdateNoteMeta} 
                 onTrash={handleTrashNote}
                 onArchive={handleArchiveNote}
               />
@@ -196,16 +227,19 @@ export default function HomePage() {
           </div>
         )}
       </main>
-      <NewNoteDialog
-        isOpen={isNewNoteDialogOpen}
-        onClose={() => setIsNewNoteDialogOpen(false)}
-        onSave={handleSaveNewNote}
+      <NoteEditorDialog
+        isOpen={isNoteDialogOpen}
+        onClose={() => {
+          setIsNoteDialogOpen(false);
+          setEditingNote(null);
+        }}
+        onSave={handleSaveNote}
+        noteToEdit={editingNote}
       />
     </div>
   );
 }
 
-// Simple StickyNote Icon for empty state
 const StickyNoteIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -224,5 +258,6 @@ const StickyNoteIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <path d="M15 3v6h6" />
   </svg>
 );
+    
 
     

@@ -94,3 +94,41 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Custom scrollbar for NoteCard content */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(128,128,128,0.3);
+  border-radius: 3px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(128,128,128,0.5);
+}
+
+/* Basic prose styling for rendered markdown in NoteCard */
+.prose ul {
+  list-style-type: disc;
+  margin-left: 1.25rem; /* Equivalent to ml-5 in Tailwind */
+  padding-left: 0.5rem; /* Some extra padding for items */
+}
+.prose li {
+  margin-bottom: 0.25rem; /* Space between list items */
+}
+.prose strong {
+  font-weight: bold;
+}
+.prose em {
+  font-style: italic;
+}
+.prose p {
+  margin-bottom: 0.5rem; /* Space between paragraphs */
+}
+.prose p:last-child {
+  margin-bottom: 0;
+}
