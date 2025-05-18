@@ -152,7 +152,7 @@ const CanvasNoteDialog: FC<CanvasNoteDialogProps> = ({ isOpen, onClose, onSave, 
         </div>
         <DialogFooter className="sm:justify-end space-x-2 pt-2">
           <DialogClose asChild>
-            <Button type="button" variant="outline" className="bg-background/80 hover:bg-background text-foreground">
+            <Button type="button" variant="outline">
               Cancel
             </Button>
           </DialogClose>

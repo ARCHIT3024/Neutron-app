@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
-import { Palette, Tags as TagsIconLucide, Bold, Underline, List, Check } from 'lucide-react';
+import { Palette, Tags as TagsIconLucide, BoldIcon, UnderlineIcon, ListIcon, Check } from 'lucide-react'; // Updated imports
 import { Separator } from '@/components/ui/separator';
 import type { Note, Tag } from '@/types';
 
@@ -126,16 +126,23 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
     
     const wrapText = (prefix: string, suffix: string) => {
         newContent = `${content.substring(0, selectionStart)}${prefix}${selectedText}${suffix}${content.substring(selectionEnd)}`;
-        cursorPosition = selectionEnd + prefix.length + suffix.length;
+        cursorPosition = selectionStart + prefix.length + (selectedText ? selectedText.length : 0) + suffix.length;
     };
+    
+    const wrapOrInsert = (prefix: string, suffix: string, insertOnlyPrefix?: string, insertOnlySuffix?: string, insertCursorOffset?: number) => {
+      if (selectedText) {
+        wrapText(prefix, suffix);
+      } else {
+        const textToInsert = `${insertOnlyPrefix || prefix}${insertOnlySuffix || suffix}`;
+        const finalCursorOffset = insertCursorOffset !== undefined ? insertCursorOffset : (insertOnlyPrefix || prefix).length;
+        insertText(textToInsert, finalCursorOffset);
+      }
+    };
+
 
     switch (type) {
       case 'bold':
-        if (selectedText) {
-          wrapText('**', '**');
-        } else {
-          insertText('****', 2); // Cursor in the middle of ****
-        }
+        wrapOrInsert('**', '**', '**', '**', 2);
         break;
       case 'list':
         if (selectedText) {
@@ -146,15 +153,11 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
         } else {
           const currentLineStart = content.lastIndexOf('\n', selectionStart -1) + 1;
           const prefix = (currentLineStart === 0 || content.charAt(currentLineStart-1) === '\n') && selectionStart !== 0 ? '' : '\n';
-          insertText(`${prefix}* `, prefix.length + 2); // After "* "
+          insertText(`${prefix}* `, prefix.length + 2); 
         }
         break;
       case 'underline':
-         if (selectedText) {
-          wrapText('<u>', '</u>');
-        } else {
-          insertText('<u></u>', 3); // Cursor in the middle of <u></u>
-        }
+        wrapOrInsert('<u>', '</u>', '<u>', '</u>', 3);
         break;
     }
     
@@ -206,7 +209,7 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
               id="note-content"
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="Start typing your note here... (Supports Markdown for **bold**, *italic*, lists, and <u>underline</u>)"
+              placeholder="Start typing your note here... (Supports Markdown for **bold**, *italic*, lists, and <u>underline</u> tags)"
               className="min-h-[150px] text-sm bg-background/80 border-input focus:ring-primary focus:border-primary rounded-md p-3 text-foreground placeholder:text-muted-foreground"
             />
           </div>
@@ -232,7 +235,7 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
                   variant="outline" 
                   size="icon" 
                   aria-label="Change note color"
-                  className="h-8 w-8 bg-background/80 hover:bg-background text-foreground"
+                  className="h-8 w-8"
                   style={{ color: dialogTextColor }}
                 >
                   <Palette className="h-4 w-4" />
@@ -262,7 +265,7 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
               size="icon" 
               onClick={() => document.getElementById('note-tags')?.focus()}
               aria-label="Edit tags"
-              className="h-8 w-8 bg-background/80 hover:bg-background text-foreground"
+              className="h-8 w-8"
                style={{ color: dialogTextColor }}
             >
               <TagsIconLucide className="h-4 w-4" />
@@ -275,36 +278,36 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
               size="icon" 
               onClick={() => handleFormatAction('bold')}
               aria-label="Bold text"
-              className="h-8 w-8 bg-background/80 hover:bg-background text-foreground"
+              className="h-8 w-8"
                style={{ color: dialogTextColor }}
             >
-              <Bold className="h-4 w-4" />
+              <BoldIcon className="h-4 w-4" />
             </Button>
             <Button 
               variant="outline" 
               size="icon" 
               onClick={() => handleFormatAction('underline')}
               aria-label="Underline text"
-              className="h-8 w-8 bg-background/80 hover:bg-background text-foreground"
+              className="h-8 w-8"
                style={{ color: dialogTextColor }}
             >
-              <Underline className="h-4 w-4" />
+              <UnderlineIcon className="h-4 w-4" />
             </Button>
             <Button 
               variant="outline" 
               size="icon" 
               onClick={() => handleFormatAction('list')}
               aria-label="List format"
-              className="h-8 w-8 bg-background/80 hover:bg-background text-foreground"
+              className="h-8 w-8"
                style={{ color: dialogTextColor }}
             >
-              <List className="h-4 w-4" />
+              <ListIcon className="h-4 w-4" />
             </Button>
           </div>
         </div>
         <DialogFooter className="sm:justify-end space-x-2 pt-2">
           <DialogClose asChild>
-            <Button type="button" variant="outline" className="bg-background/80 hover:bg-background text-foreground">
+            <Button type="button" variant="outline">
               Cancel
             </Button>
           </DialogClose>
