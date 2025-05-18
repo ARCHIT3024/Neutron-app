@@ -8,6 +8,7 @@ import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useTheme } from '@/hooks/use-theme';
+import { cn } from '@/lib/utils';
 
 export default function SettingsPage() {
   const { isMobile } = useSidebar();
@@ -37,8 +38,17 @@ export default function SettingsPage() {
             onCheckedChange={toggleTheme} 
             aria-label="Toggle dark mode" 
           />
-          <Label htmlFor="dark-mode-toggle" className="flex items-center gap-2 cursor-pointer">
-            {isDarkMode ? <Moon className="h-5 w-5 text-primary" /> : <Sun className="h-5 w-5 text-primary" />}
+          <Label htmlFor="dark-mode-toggle" className="flex items-center gap-2 cursor-pointer text-sm">
+            <div className="relative w-5 h-5" aria-hidden="true">
+              <Sun className={cn(
+                "absolute top-0 left-0 h-full w-full text-primary transition-all duration-500 ease-in-out",
+                isDarkMode ? "opacity-0 scale-50 -rotate-90" : "opacity-100 scale-100 rotate-0"
+              )} />
+              <Moon className={cn(
+                "absolute top-0 left-0 h-full w-full text-primary transition-all duration-500 ease-in-out",
+                isDarkMode ? "opacity-100 scale-100 rotate-0" : "opacity-0 scale-50 rotate-90"
+              )} />
+            </div>
             <span>{isDarkMode ? "Dark Mode" : "Light Mode"}</span>
           </Label> 
         </div>
