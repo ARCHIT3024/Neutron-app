@@ -9,7 +9,9 @@ import { PlusCircle, Loader2, Moon, Sun } from 'lucide-react';
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 import { useToast } from '@/hooks/use-toast';
 import NoteEditorDialog from '@/components/NewNoteDialog'; 
-import { useTheme } from '@/hooks/use-theme'; // Added import
+import { useTheme } from '@/hooks/use-theme';
+import NewNoteTypeDialog from '@/components/NewNoteTypeDialog'; // Added import
+import CanvasNoteDialog from '@/components/CanvasNoteDialog'; // Added import
 
 const initialNotesData: Note[] = [
   {
@@ -26,6 +28,7 @@ const initialNotesData: Note[] = [
     status: 'active',
     archivedAt: null,
     trashedAt: null,
+    type: 'text',
   },
   {
     id: '2',
@@ -39,6 +42,7 @@ const initialNotesData: Note[] = [
     status: 'active',
     archivedAt: null,
     trashedAt: null,
+    type: 'text',
   },
   {
     id: '3',
@@ -52,6 +56,7 @@ const initialNotesData: Note[] = [
     status: 'active',
     archivedAt: null,
     trashedAt: null,
+    type: 'text',
   },
 ];
 
@@ -60,9 +65,13 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true);
   const { isMobile } = useSidebar();
   const { toast } = useToast();
-  const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false); 
+  
+  const [isTextNoteDialogOpen, setIsTextNoteDialogOpen] = useState(false); 
+  const [isCanvasNoteDialogOpen, setIsCanvasNoteDialogOpen] = useState(false);
+  const [isNewNoteTypeDialogOpen, setIsNewNoteTypeDialogOpen] = useState(false);
+  
   const [editingNote, setEditingNote] = useState<Note | null>(null);
-  const { theme, toggleTheme } = useTheme(); // Added theme hook
+  const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
     try {
@@ -89,18 +98,30 @@ export default function HomePage() {
     }
   }, [allNotes, isLoading]);
 
-
-  const handleOpenNewNoteDialog = () => {
-    setEditingNote(null); 
-    setIsNoteDialogOpen(true);
+  const handleOpenNewNoteFlow = () => {
+    setEditingNote(null);
+    setIsNewNoteTypeDialogOpen(true);
   };
 
-  const handleOpenEditNoteDialog = (note: Note) => {
+  const handleSelectNoteType = (type: 'text' | 'canvas') => {
+    setIsNewNoteTypeDialogOpen(false); // Close type selection dialog
+    if (type === 'text') {
+      setIsTextNoteDialogOpen(true);
+    } else if (type === 'canvas') {
+      setIsCanvasNoteDialogOpen(true);
+    }
+  };
+  
+  const handleOpenEditDialog = (note: Note) => {
     setEditingNote(note);
-    setIsNoteDialogOpen(true);
+    if (note.type === 'text') {
+      setIsTextNoteDialogOpen(true);
+    } else if (note.type === 'canvas') {
+      setIsCanvasNoteDialogOpen(true);
+    }
   };
 
-  const handleSaveNote = (noteData: { id?: string; title: string; content: string; color: string; tags: Tag[] }) => {
+  const handleSaveTextNote = (noteData: { id?: string; title: string; content: string; color: string; tags: Tag[] }) => {
     if (noteData.id) { 
       setAllNotes((prevNotes) =>
         prevNotes.map((note) =>
@@ -117,8 +138,8 @@ export default function HomePage() {
         )
       );
       toast({
-        title: "Note Updated",
-        description: "Your note has been successfully updated.",
+        title: "Text Note Updated",
+        description: "Your text note has been successfully updated.",
       });
     } else { 
       const newNote: Note = {
@@ -133,16 +154,64 @@ export default function HomePage() {
         status: 'active',
         archivedAt: null,
         trashedAt: null,
+        type: 'text', // Explicitly set type
       };
       setAllNotes((prevNotes) => [newNote, ...prevNotes]);
       toast({
-        title: "Note Created",
-        description: "Your new note has been added to the board.",
+        title: "Text Note Created",
+        description: "Your new text note has been added.",
       });
     }
-    setIsNoteDialogOpen(false);
+    setIsTextNoteDialogOpen(false);
     setEditingNote(null);
   };
+
+  const handleSaveCanvasNote = (noteData: { id?: string; title: string; canvasData: string; color: string; tags: Tag[] }) => {
+    if (noteData.id) {
+      setAllNotes((prevNotes) =>
+        prevNotes.map((note) =>
+          note.id === noteData.id
+            ? { 
+                ...note, 
+                title: noteData.title, 
+                canvasData: noteData.canvasData, 
+                color: noteData.color, // For card background
+                tags: noteData.tags,
+                updatedAt: new Date().toISOString() 
+              }
+            : note
+        )
+      );
+      toast({
+        title: "Canvas Note Updated",
+        description: "Your canvas note has been successfully updated.",
+      });
+    } else {
+      const newNote: Note = {
+        id: crypto.randomUUID(),
+        title: noteData.title,
+        content: '', // Not used for canvas, but required by type
+        canvasData: noteData.canvasData,
+        color: noteData.color, // For card background
+        tags: noteData.tags,
+        isPinned: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        status: 'active',
+        archivedAt: null,
+        trashedAt: null,
+        type: 'canvas',
+      };
+      setAllNotes((prevNotes) => [newNote, ...prevNotes]);
+      toast({
+        title: "Canvas Note Created",
+        description: "Your new canvas note has been added.",
+      });
+    }
+    setIsCanvasNoteDialogOpen(false);
+    setEditingNote(null);
+  };
+
 
   const handleUpdateNoteMeta = (id: string, updates: Partial<Note>) => {
     setAllNotes((prevNotes) =>
@@ -201,7 +270,7 @@ export default function HomePage() {
           <Button onClick={toggleTheme} variant="ghost" size="icon" aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>
             {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           </Button>
-          <Button onClick={handleOpenNewNoteDialog} size="sm" aria-label="Create a new note">
+          <Button onClick={handleOpenNewNoteFlow} size="sm" aria-label="Create a new note">
             <PlusCircle className="mr-2 h-4 w-4" aria-hidden="true" /> New Note
           </Button>
         </div>
@@ -212,7 +281,7 @@ export default function HomePage() {
             <StickyNoteIcon className="w-16 h-16 text-muted-foreground mb-4" aria-hidden="true" />
             <h2 className="text-2xl font-semibold mb-2">No active notes yet!</h2>
             <p className="text-muted-foreground mb-4">Click "New Note" to get started or check your archive/trash.</p>
-            <Button onClick={handleOpenNewNoteDialog} aria-label="Create your first note">
+            <Button onClick={handleOpenNewNoteFlow} aria-label="Create your first note">
               <PlusCircle className="mr-2 h-4 w-4" aria-hidden="true" /> Create Your First Note
             </Button>
           </div>
@@ -222,7 +291,7 @@ export default function HomePage() {
               <NoteCard
                 key={note.id}
                 note={note}
-                onEdit={() => handleOpenEditNoteDialog(note)}
+                onEdit={() => handleOpenEditDialog(note)}
                 onUpdate={handleUpdateNoteMeta} 
                 onTrash={handleTrashNote}
                 onArchive={handleArchiveNote}
@@ -231,14 +300,31 @@ export default function HomePage() {
           </div>
         )}
       </main>
+      
+      <NewNoteTypeDialog 
+        isOpen={isNewNoteTypeDialogOpen}
+        onClose={() => setIsNewNoteTypeDialogOpen(false)}
+        onSelectType={handleSelectNoteType}
+      />
+
       <NoteEditorDialog
-        isOpen={isNoteDialogOpen}
+        isOpen={isTextNoteDialogOpen}
         onClose={() => {
-          setIsNoteDialogOpen(false);
+          setIsTextNoteDialogOpen(false);
           setEditingNote(null);
         }}
-        onSave={handleSaveNote}
-        noteToEdit={editingNote}
+        onSave={handleSaveTextNote}
+        noteToEdit={editingNote?.type === 'text' ? editingNote : null}
+      />
+
+      <CanvasNoteDialog
+        isOpen={isCanvasNoteDialogOpen}
+        onClose={() => {
+          setIsCanvasNoteDialogOpen(false);
+          setEditingNote(null);
+        }}
+        onSave={handleSaveCanvasNote}
+        noteToEdit={editingNote?.type === 'canvas' ? editingNote : null}
       />
     </div>
   );

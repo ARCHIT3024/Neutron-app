@@ -1,3 +1,4 @@
+
 export interface Tag {
   id: string;
   name: string;
@@ -7,18 +8,19 @@ export interface Tag {
 export interface Note {
   id: string;
   title?: string; // Optional title for the note
-  content: string;
+  content: string; // For text notes
   color: string; // Hex color string for note background
   tags: Tag[];
   isPinned: boolean;
-  imageUrl?: string;
+  imageUrl?: string; // For text notes, if an image is attached
   dataAiHint?: string; // Hint for AI image search if imageUrl is a placeholder
-  summary?: string;
+  summary?: string; // For text notes
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string
   position?: { x: number; y: number }; // For draggable notes, to be implemented
-  // type: 'text' | 'canvas'; // To distinguish between text and canvas notes
-  // canvasData?: any; // Store canvas drawing data
+  
+  type: 'text' | 'canvas'; // Distinguish between text and canvas notes
+  canvasData?: string; // Store canvas drawing data as base64 string
 
   // New fields for soft delete and archiving
   status: 'active' | 'archived' | 'trashed';
