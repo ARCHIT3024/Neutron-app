@@ -10,8 +10,8 @@ import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 import { useToast } from '@/hooks/use-toast';
 import NoteEditorDialog from '@/components/NewNoteDialog'; 
 import { useTheme } from '@/hooks/use-theme';
-import NewNoteTypeDialog from '@/components/NewNoteTypeDialog'; // Added import
-import CanvasNoteDialog from '@/components/CanvasNoteDialog'; // Added import
+import NewNoteTypeDialog from '@/components/NewNoteTypeDialog';
+import CanvasNoteDialog from '@/components/CanvasNoteDialog';
 
 const initialNotesData: Note[] = [
   {
@@ -21,8 +21,8 @@ const initialNotesData: Note[] = [
     color: '#FFFACD', 
     tags: [{ id: 'tag1', name: 'Welcome' }],
     isPinned: false,
-    imageUrl: 'https://placehold.co/600x400.png',
-    dataAiHint: 'welcome abstract',
+    imageUrl: 'https://placehold.co/600x400.png', // Example image
+    dataAiHint: 'welcome abstract', // Example hint
     createdAt: new Date(Date.now() - 86400000).toISOString(), 
     updatedAt: new Date().toISOString(),
     status: 'active',
@@ -104,7 +104,7 @@ export default function HomePage() {
   };
 
   const handleSelectNoteType = (type: 'text' | 'canvas') => {
-    setIsNewNoteTypeDialogOpen(false); // Close type selection dialog
+    setIsNewNoteTypeDialogOpen(false); 
     if (type === 'text') {
       setIsTextNoteDialogOpen(true);
     } else if (type === 'canvas') {
@@ -121,7 +121,7 @@ export default function HomePage() {
     }
   };
 
-  const handleSaveTextNote = (noteData: { id?: string; title: string; content: string; color: string; tags: Tag[] }) => {
+  const handleSaveTextNote = (noteData: { id?: string; title: string; content: string; color: string; tags: Tag[]; imageUrl?: string; dataAiHint?: string; }) => {
     if (noteData.id) { 
       setAllNotes((prevNotes) =>
         prevNotes.map((note) =>
@@ -132,6 +132,8 @@ export default function HomePage() {
                 content: noteData.content, 
                 color: noteData.color, 
                 tags: noteData.tags,
+                imageUrl: noteData.imageUrl,
+                dataAiHint: noteData.dataAiHint,
                 updatedAt: new Date().toISOString() 
               } 
             : note
@@ -148,13 +150,15 @@ export default function HomePage() {
         content: noteData.content, 
         color: noteData.color, 
         tags: noteData.tags,
+        imageUrl: noteData.imageUrl,
+        dataAiHint: noteData.dataAiHint,
         isPinned: false,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         status: 'active',
         archivedAt: null,
         trashedAt: null,
-        type: 'text', // Explicitly set type
+        type: 'text', 
       };
       setAllNotes((prevNotes) => [newNote, ...prevNotes]);
       toast({
@@ -175,7 +179,7 @@ export default function HomePage() {
                 ...note, 
                 title: noteData.title, 
                 canvasData: noteData.canvasData, 
-                color: noteData.color, // For card background
+                color: noteData.color, 
                 tags: noteData.tags,
                 updatedAt: new Date().toISOString() 
               }
@@ -190,9 +194,9 @@ export default function HomePage() {
       const newNote: Note = {
         id: crypto.randomUUID(),
         title: noteData.title,
-        content: '', // Not used for canvas, but required by type
+        content: '', 
         canvasData: noteData.canvasData,
-        color: noteData.color, // For card background
+        color: noteData.color, 
         tags: noteData.tags,
         isPinned: false,
         createdAt: new Date().toISOString(),
@@ -348,3 +352,4 @@ const StickyNoteIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <path d="M15 3v6h6" />
   </svg>
 );
+

@@ -115,6 +115,27 @@ export default function NoteCard({
     }
   };
 
+  const handleAttachImage = () => {
+    if (note.status !== 'active' || note.type === 'canvas') return;
+    const currentUrl = note.imageUrl || "https://placehold.co/600x400.png";
+    const newImageUrl = window.prompt("Enter image URL:", currentUrl);
+    if (newImageUrl !== null) { // User didn't cancel
+      let newHint = note.dataAiHint;
+      if (newImageUrl && !newImageUrl.startsWith('https://placehold.co')) {
+        newHint = 'user image';
+      } else if (newImageUrl && newImageUrl.startsWith('https://placehold.co') && (!newHint || newHint === 'user image')) {
+        newHint = 'abstract texture'; // Default for placeholders
+      } else if (!newImageUrl) {
+          newHint = ''; // Clear hint if URL is cleared
+      }
+      onUpdate(note.id, { imageUrl: newImageUrl || undefined, dataAiHint: newHint, updatedAt: new Date().toISOString() });
+      toast({
+        title: newImageUrl ? "Image URL Updated" : "Image URL Removed",
+        description: newImageUrl ? "The note's image has been updated." : "The note's image has been removed.",
+      });
+    }
+  };
+
   const isViewOnly = note.status !== 'active';
 
   const renderTextContent = (markdown: string) => {
@@ -205,14 +226,14 @@ export default function NoteCard({
                   <DropdownMenuItem onSelect={handleEditClick}>
                     <Edit3 className="mr-2 h-4 w-4" aria-hidden="true" /> Edit Note
                   </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => alert('Color picker from card menu not implemented yet.')} disabled>
+                  <DropdownMenuItem onSelect={() => alert('Color picker from card menu not implemented yet. Edit the note to change color.')} disabled>
                     <Palette className="mr-2 h-4 w-4" aria-hidden="true" /> Change Color
                   </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => alert('Tag editing from card menu not implemented yet.')} disabled>
+                  <DropdownMenuItem onSelect={() => alert('Tag editing from card menu not implemented yet. Edit the note to change tags.')} disabled>
                     <TagIcon className="mr-2 h-4 w-4" aria-hidden="true" /> Edit Tags
                   </DropdownMenuItem>
                   {note.type === 'text' && (
-                    <DropdownMenuItem onSelect={() => alert('Image attachment not implemented yet.')} disabled>
+                    <DropdownMenuItem onSelect={handleAttachImage}>
                       <ImagePlus className="mr-2 h-4 w-4" aria-hidden="true" /> Attach Image
                     </DropdownMenuItem>
                   )}
@@ -296,12 +317,12 @@ export default function NoteCard({
           </>
         )}
         {note.type === 'canvas' && note.canvasData && (
-           <div className="mt-2 aspect-video relative overflow-hidden rounded-md border bg-slate-50"> {/* Added bg for canvas */}
+           <div className="mt-2 aspect-video relative overflow-hidden rounded-md border bg-slate-50"> 
             <Image 
               src={note.canvasData} 
               alt={note.title || `Canvas drawing for note ${note.id}`}
               fill={true} 
-              style={{objectFit:"contain"}} // Use contain to see whole drawing
+              style={{objectFit:"contain"}} 
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
               priority={note.isPinned}
               data-ai-hint="drawing sketch"
@@ -343,3 +364,4 @@ export default function NoteCard({
     </Card>
   );
 }
+

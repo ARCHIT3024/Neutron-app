@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
-import { Palette, Tags as TagsIconLucide, BoldIcon, UnderlineIcon, ListIcon, Check } from 'lucide-react';
+import { Palette, Tags as TagsIconLucide, BoldIcon, UnderlineIcon, ListIcon, Check, ImagePlus as ImagePlusIcon } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import type { Note, Tag } from '@/types';
 import { useTheme } from '@/hooks/use-theme'; 
@@ -24,7 +24,7 @@ import { useTheme } from '@/hooks/use-theme';
 interface NoteEditorDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (noteData: { id?: string; title: string; content: string; color: string; tags: Tag[] }) => void;
+  onSave: (noteData: { id?: string; title: string; content: string; color: string; tags: Tag[]; imageUrl?: string; dataAiHint?: string; }) => void;
   noteToEdit?: Note | null;
 }
 
@@ -58,6 +58,8 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
   const [content, setContent] = useState('');
   const [selectedColor, setSelectedColor] = useState<string>(PRESET_COLORS[0]);
   const [tagsString, setTagsString] = useState<string>('');
+  const [imageUrl, setImageUrl] = useState<string>('');
+  const [dataAiHint, setDataAiHint] = useState<string>('');
   const contentTextareaRef = useRef<HTMLTextAreaElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
 
@@ -77,6 +79,8 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
         setContent(noteToEdit.content);
         setSelectedColor(noteToEdit.color || PRESET_COLORS[0]);
         setTagsString(noteToEdit.tags?.map(tag => tag.name).join(', ') || '');
+        setImageUrl(noteToEdit.imageUrl || '');
+        setDataAiHint(noteToEdit.dataAiHint || '');
         setTimeout(() => {
             contentTextareaRef.current?.focus();
             if (contentTextareaRef.current) {
@@ -88,6 +92,8 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
         setContent('');
         setSelectedColor(PRESET_COLORS[0]);
         setTagsString('');
+        setImageUrl('');
+        setDataAiHint('');
         setTimeout(() => {
             titleInputRef.current?.focus();
         }, 100);
@@ -102,12 +108,22 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
       .filter(tagName => tagName !== '')
       .map(tagName => ({ id: crypto.randomUUID(), name: tagName }));
     
+    let finalDataAiHint = dataAiHint;
+    if (imageUrl && !imageUrl.startsWith('https://placehold.co') && !finalDataAiHint) {
+        finalDataAiHint = 'user image';
+    } else if (imageUrl && imageUrl.startsWith('https://placehold.co') && !finalDataAiHint) {
+        finalDataAiHint = 'abstract texture'; // Default for placeholders if not set
+    }
+
+
     onSave({
       id: noteToEdit?.id,
       title,
       content,
       color: selectedColor,
       tags: parsedTags,
+      imageUrl,
+      dataAiHint: finalDataAiHint,
     });
   };
 
@@ -150,7 +166,7 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
 
     switch (type) {
       case 'bold':
-        wrapOrInsert('**', '**', '**', '**', 2);
+        wrapOrInsert('**', '**', '****', '', 2);
         break;
       case 'list':
         if (selectedText) {
@@ -165,7 +181,7 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
         }
         break;
       case 'underline':
-         wrapOrInsert('<u>', '</u>', '<u>', '</u>', 3);
+         wrapOrInsert('<u>', '</u>', '<u></u>', '', 3);
         break;
     }
     
@@ -175,6 +191,21 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
       textarea.focus();
       textarea.setSelectionRange(cursorPosition, cursorPosition);
     }, 0);
+  };
+
+  const handleImageAction = () => {
+    const currentUrl = imageUrl || "https://placehold.co/600x400.png";
+    const newUrl = window.prompt("Enter image URL:", currentUrl);
+    if (newUrl !== null) { // User didn't cancel prompt
+      setImageUrl(newUrl);
+      if (newUrl && !newUrl.startsWith('https://placehold.co')) {
+        setDataAiHint('user image'); // Default hint for non-placeholders
+      } else if (newUrl && newUrl.startsWith('https://placehold.co') && (!dataAiHint || dataAiHint === 'user image')) {
+        setDataAiHint('abstract texture'); // Default for placeholders
+      } else if (!newUrl) {
+        setDataAiHint(''); // Clear hint if URL is cleared
+      }
+    }
   };
 
 
@@ -210,14 +241,14 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
           </div>
           <div className="grid gap-2">
             <Label htmlFor="note-content" className="text-sm font-medium" style={{ color: mainDialogTextColor === '#000000' ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.7)'}}>
-              Content
+              Content (Markdown supported: **bold**, *italic*, <u>underline</u>, lists)
             </Label>
             <Textarea
               ref={contentTextareaRef}
               id="note-content"
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="Supports Markdown: **bold**, *italic*, <u>underline</u>, and lists."
+              placeholder="Start typing your note here..."
               className="min-h-[150px] text-sm bg-background/80 border-input focus:ring-primary focus:border-primary rounded-md p-3 text-foreground placeholder:text-muted-foreground"
             />
           </div>
@@ -233,6 +264,29 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
               className="text-sm bg-background/80 border-input focus:ring-primary focus:border-primary rounded-md p-3 text-foreground placeholder:text-muted-foreground"
             />
           </div>
+           {/* Display current image URL if one exists, and allow editing data-ai-hint for placeholders */}
+           {imageUrl && (
+            <div className="grid gap-2">
+                <Label htmlFor="note-image-url-display" className="text-sm font-medium" style={{ color: mainDialogTextColor === '#000000' ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.7)'}}>
+                Current Image URL
+                </Label>
+                <p className="text-xs truncate p-2 rounded-md bg-background/50" style={{ color: mainDialogTextColor === '#000000' ? 'rgba(0,0,0,0.9)' : 'rgba(255,255,255,0.9)'}}>{imageUrl}</p>
+            </div>
+            )}
+           {imageUrl && imageUrl.startsWith('https://placehold.co') && (
+             <div className="grid gap-2">
+                <Label htmlFor="note-image-hint" className="text-sm font-medium" style={{ color: mainDialogTextColor === '#000000' ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.7)'}}>
+                  Placeholder Image Hint (1-2 words)
+                </Label>
+                <Input
+                  id="note-image-hint"
+                  value={dataAiHint}
+                  onChange={(e) => setDataAiHint(e.target.value.split(' ').slice(0,2).join(' '))}
+                  placeholder="e.g. office desk"
+                  className="text-sm bg-background/80 border-input focus:ring-primary focus:border-primary rounded-md p-3 text-foreground placeholder:text-muted-foreground"
+                />
+            </div>
+           )}
           
           <Separator className="my-2 bg-border/50" />
 
@@ -310,6 +364,16 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
                style={{ color: toolbarIconColor }}
             >
               <ListIcon className="h-4 w-4" />
+            </Button>
+             <Button 
+              variant="outline" 
+              size="icon" 
+              onClick={handleImageAction}
+              aria-label="Add or Edit Image URL"
+              className="h-8 w-8"
+               style={{ color: toolbarIconColor }}
+            >
+              <ImagePlusIcon className="h-4 w-4" />
             </Button>
           </div>
         </div>
