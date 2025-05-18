@@ -5,10 +5,11 @@ import React, { useState, useEffect } from 'react';
 import type { Note, Tag } from '@/types'; 
 import NoteCard from '@/components/NoteCard';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Loader2 } from 'lucide-react';
+import { PlusCircle, Loader2, Moon, Sun } from 'lucide-react';
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 import { useToast } from '@/hooks/use-toast';
-import NoteEditorDialog from '@/components/NewNoteDialog'; // Corrected import path
+import NoteEditorDialog from '@/components/NewNoteDialog'; 
+import { useTheme } from '@/hooks/use-theme'; // Added import
 
 const initialNotesData: Note[] = [
   {
@@ -61,9 +62,9 @@ export default function HomePage() {
   const { toast } = useToast();
   const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false); 
   const [editingNote, setEditingNote] = useState<Note | null>(null);
+  const { theme, toggleTheme } = useTheme(); // Added theme hook
 
   useEffect(() => {
-    // Load notes from localStorage
     try {
       const storedNotes = localStorage.getItem('stickycanvas-notes');
       if (storedNotes) {
@@ -100,7 +101,7 @@ export default function HomePage() {
   };
 
   const handleSaveNote = (noteData: { id?: string; title: string; content: string; color: string; tags: Tag[] }) => {
-    if (noteData.id) { // Existing note
+    if (noteData.id) { 
       setAllNotes((prevNotes) =>
         prevNotes.map((note) =>
           note.id === noteData.id 
@@ -119,7 +120,7 @@ export default function HomePage() {
         title: "Note Updated",
         description: "Your note has been successfully updated.",
       });
-    } else { // New note
+    } else { 
       const newNote: Note = {
         id: crypto.randomUUID(),
         title: noteData.title, 
@@ -196,9 +197,14 @@ export default function HomePage() {
           {isMobile && <SidebarTrigger aria-label="Toggle sidebar" />}
           <h1 className="text-2xl font-semibold">My Notes</h1>
         </div>
-        <Button onClick={handleOpenNewNoteDialog} size="sm" aria-label="Create a new note">
-          <PlusCircle className="mr-2 h-4 w-4" aria-hidden="true" /> New Note
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button onClick={toggleTheme} variant="ghost" size="icon" aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>
+            {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+          </Button>
+          <Button onClick={handleOpenNewNoteDialog} size="sm" aria-label="Create a new note">
+            <PlusCircle className="mr-2 h-4 w-4" aria-hidden="true" /> New Note
+          </Button>
+        </div>
       </header>
       <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto">
         {sortedActiveNotes.length === 0 ? (
@@ -256,6 +262,3 @@ const StickyNoteIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <path d="M15 3v6h6" />
   </svg>
 );
-    
-
-    

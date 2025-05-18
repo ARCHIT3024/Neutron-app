@@ -1,23 +1,19 @@
 
 "use client";
 
-import { Settings as SettingsIconLucide } from 'lucide-react'; // Renamed to avoid conflict
+import { Settings as SettingsIconLucide, Moon, Sun } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
-import { Switch } from "@/components/ui/switch"
-import { Label } from "@/components/ui/label"
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { useTheme } from '@/hooks/use-theme';
 
 export default function SettingsPage() {
   const { isMobile } = useSidebar();
-  // Add state for theme toggle if implementing light/dark mode switch
-  // const [isDarkMode, setIsDarkMode] = useState(false); // Example state
-  // const toggleTheme = () => {
-  //   const newIsDarkMode = !isDarkMode;
-  //   setIsDarkMode(newIsDarkMode);
-  //   document.documentElement.classList.toggle('dark', newIsDarkMode);
-  // };
+  const { theme, toggleTheme } = useTheme();
 
+  const isDarkMode = theme === 'dark';
 
   return (
     <div className="flex flex-col h-screen">
@@ -31,21 +27,20 @@ export default function SettingsPage() {
         <SettingsIconLucide className="w-24 h-24 text-muted-foreground mb-6" aria-hidden="true" />
         <h2 className="text-3xl font-semibold mb-3">App Settings</h2>
         <p className="text-muted-foreground mb-6 max-w-md">
-          Configure your StickyCanvas experience. More settings coming soon!
+          Configure your StickyCanvas experience.
         </p>
         
-        <div className="flex items-center space-x-2 my-4">
-          {/* 
-          // Example for a functional switch:
+        <div className="flex items-center space-x-3 my-4 p-4 border rounded-lg shadow-sm bg-card">
           <Switch 
             id="dark-mode-toggle" 
-            // checked={isDarkMode} 
-            // onCheckedChange={toggleTheme} 
+            checked={isDarkMode} 
+            onCheckedChange={toggleTheme} 
             aria-label="Toggle dark mode" 
           />
-          <Label htmlFor="dark-mode-toggle">Dark Mode</Label> 
-          */}
-           <p className="text-sm text-muted-foreground">(Dark mode toggle coming soon)</p>
+          <Label htmlFor="dark-mode-toggle" className="flex items-center gap-2 cursor-pointer">
+            {isDarkMode ? <Moon className="h-5 w-5 text-primary" /> : <Sun className="h-5 w-5 text-primary" />}
+            <span>{isDarkMode ? "Dark Mode" : "Light Mode"}</span>
+          </Label> 
         </div>
 
         <Button asChild className="mt-4">
