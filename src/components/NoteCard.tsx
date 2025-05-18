@@ -2,7 +2,7 @@
 "use client";
 
 import type { Note } from '@/types';
-import React, { useState } from 'react'; 
+import React, { useState } from 'react';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -19,10 +19,10 @@ import {
   MoreVertical,
   Loader2,
   Archive as ArchiveIconLucide, // Renamed to avoid conflict
-  ArchiveRestore, 
-  RotateCcw, 
+  ArchiveRestore,
+  RotateCcw,
   Trash,
-  Edit3 
+  Edit3
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -35,13 +35,13 @@ import Image from 'next/image';
 
 interface NoteCardProps {
   note: Note;
-  onEdit: (id: string) => void; 
-  onUpdate: (id: string, updates: Partial<Note>) => void; 
-  onTrash?: (id: string) => void; 
-  onRestore?: (id: string) => void; 
-  onDeletePermanently?: (id: string) => void; 
-  onArchive?: (id: string) => void; 
-  onUnarchive?: (id: string) => void; 
+  onEdit: (id: string) => void;
+  onUpdate: (id: string, updates: Partial<Note>) => void;
+  onTrash?: (id: string) => void;
+  onRestore?: (id: string) => void;
+  onDeletePermanently?: (id: string) => void;
+  onArchive?: (id: string) => void;
+  onUnarchive?: (id: string) => void;
 }
 
 const getTextColorForBackground = (bgColor?: string): string => {
@@ -52,15 +52,15 @@ const getTextColorForBackground = (bgColor?: string): string => {
     const b = parseInt(bgColor.slice(5, 7), 16);
     return (r * 0.299 + g * 0.587 + b * 0.114) > 186 ? '#000000' : '#FFFFFF';
   } catch (e) {
-    return 'hsl(var(--card-foreground))'; 
+    return 'hsl(var(--card-foreground))';
   }
 };
 
 
-export default function NoteCard({ 
-  note, 
+export default function NoteCard({
+  note,
   onEdit,
-  onUpdate, 
+  onUpdate,
   onTrash,
   onRestore,
   onDeletePermanently,
@@ -69,7 +69,7 @@ export default function NoteCard({
 }: NoteCardProps) {
   const [isSummarizing, setIsSummarizing] = useState(false);
   const { toast } = useToast();
-  
+
   const textColor = getTextColorForBackground(note.color);
 
   const handleEditClick = () => {
@@ -77,7 +77,7 @@ export default function NoteCard({
       onEdit(note.id);
     }
   };
-  
+
   const handleTogglePin = () => {
     if (note.status !== 'active') return;
     onUpdate(note.id, { isPinned: !note.isPinned, updatedAt: new Date().toISOString() });
@@ -140,22 +140,28 @@ export default function NoteCard({
 
   const renderTextContent = (markdown: string) => {
     if (!markdown) return null;
+    // Basic Markdown to HTML conversion
     let html = markdown
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') 
-      .replace(/\*(.*?)\*/g, '<em>$1</em>')         
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')         // Italic
       .replace(/<u>(.*?)<\/u>/g, '<u>$1</u>')       // Handle <u> tags
-      .replace(/(\r\n|\r|\n){2,}/g, '</p><p>')        
-      .replace(/(\r\n|\r|\n)/g, '<br />');             
-      
+      .replace(/(\r\n|\r|\n){2,}/g, '</p><p>')         // Paragraphs
+      .replace(/(\r\n|\r|\n)/g, '<br />');              // Line breaks
+
+    // Handle simple unordered lists (very basic)
     html = html.replace(/^(\*|-) (.*?)(?=<br \/>|$)/gm, (match, bullet, item) => `<li>${item.trim()}</li>`);
-    html = html.replace(/(<li>.*?<\/li>)+/gs, '<ul>$1</ul>'); 
-    html = html.replace(/<li>(.*?)<br \/>(.*?)<\/li>/g, '<li>$1$2</li>');
+    html = html.replace(/(<li>.*?<\/li>)+/gs, '<ul>$1</ul>'); // Wrap consecutive LIs in UL
+    // Correct potential <br /> inside <li> created by general line break replacement
+    html = html.replace(/<li>(.*?)<br \/>(.*?)<\/li>/g, '<li>$1$2</li>'); // simplistic, might need more robust logic
+
+    // Ensure content starts with a block element if not already a list
     if (!html.startsWith('<p>') && !html.startsWith('<ul>')) {
       html = `<p>${html}</p>`;
     }
-    html = html.replace(/<\/p><p>/g, '</p><p class="mt-2">'); 
-    html = html.replace(/<\/ul><p>/g, '</ul><p class="mt-2">'); 
-    html = html.replace(/<\/ul><br \/><p>/g, '</ul><p class="mt-2">');
+    // Add margin between paragraphs and lists if they follow each other
+    html = html.replace(/<\/p><p>/g, '</p><p class="mt-2">');
+    html = html.replace(/<\/ul><p>/g, '</ul><p class="mt-2">');
+    html = html.replace(/<\/ul><br \/><p>/g, '</ul><p class="mt-2">'); // In case a BR slipped after UL
 
     return <div dangerouslySetInnerHTML={{ __html: html }} className="prose prose-sm max-w-none" style={{color: textColor}} />;
   };
@@ -163,7 +169,7 @@ export default function NoteCard({
 
   return (
     <Card
-      className={`flex flex-col h-full shadow-lg transition-transform duration-200 ease-in-out 
+      className={`flex flex-col h-full shadow-lg transition-all duration-300 ease-in-out
                   ${!isViewOnly ? 'hover:shadow-xl hover:scale-[1.01] focus-within:scale-[1.01] focus-within:shadow-2xl cursor-pointer' : 'opacity-90'}`}
       style={{ backgroundColor: note.color, color: textColor }}
       data-testid={`note-card-${note.id}`}
@@ -173,29 +179,28 @@ export default function NoteCard({
       role={!isViewOnly ? "button" : undefined}
       aria-label={isViewOnly ? `Note: ${note.title || 'Untitled'}. This note is ${note.status}.` : `Edit note: ${note.title || 'Untitled'}`}
     >
-      <CardHeader 
+      <CardHeader
         className="flex flex-row items-start justify-between p-4 space-y-0"
-        onClick={(e) => { if ((e.target as HTMLElement).closest('button')) e.stopPropagation();}} 
+        onClick={(e) => { if ((e.target as HTMLElement).closest('button')) e.stopPropagation();}}
       >
-        <div 
+        <div
           className="flex-1 min-w-0 pr-2"
         >
-          <h3 
-            className="text-xl font-bold truncate" 
+          <h3
+            className="text-xl font-bold truncate"
             style={{ color: textColor }}
-            aria-label={`Note title: ${note.title || 'Untitled'}`} // More direct label
             id={`note-title-${note.id}`}
           >
             {note.title || 'Untitled'} {note.type === 'canvas' && <span className="text-xs font-normal opacity-70">(Canvas)</span>}
           </h3>
         </div>
         <div className="flex items-center space-x-1">
-          {note.status === 'active' && ( 
-            <Button 
-              variant="ghost" 
-              size="icon" 
+          {note.status === 'active' && (
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={(e) => { e.stopPropagation(); handleTogglePin(); }}
-              className="hover:bg-white/20 focus:bg-white/20 active:scale-90 transform transition-transform duration-150 focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1" 
+              className="hover:bg-white/20 focus:bg-white/20 active:scale-90 transform transition-transform duration-150 focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1"
               style={{ color: textColor }}
               aria-label={note.isPinned ? `Unpin note titled ${note.title || 'Untitled'}` : `Pin note titled ${note.title || 'Untitled'}`}
               aria-pressed={note.isPinned}
@@ -206,11 +211,11 @@ export default function NoteCard({
           )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={(e) => e.stopPropagation()} 
-                className="hover:bg-white/20 focus:bg-white/20 active:scale-90 transform transition-transform duration-150 focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1" 
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={(e) => e.stopPropagation()}
+                className="hover:bg-white/20 focus:bg-white/20 active:scale-90 transform transition-transform duration-150 focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1"
                 style={{ color: textColor }}
                 aria-label={`More options for note titled ${note.title || 'Untitled'}`}
                 aria-haspopup="true"
@@ -219,9 +224,9 @@ export default function NoteCard({
                 <MoreVertical className="h-5 w-5" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent 
-              align="end" 
-              onClick={(e) => e.stopPropagation()} 
+            <DropdownMenuContent
+              align="end"
+              onClick={(e) => e.stopPropagation()}
               aria-labelledby={`note-title-${note.id}`}
             >
               {note.status === 'active' && (
@@ -270,7 +275,7 @@ export default function NoteCard({
                       <ArchiveRestore className="mr-2 h-4 w-4" aria-hidden="true" /> Unarchive
                     </DropdownMenuItem>
                   )}
-                  {onTrash && ( 
+                  {onTrash && (
                     <DropdownMenuItem onSelect={() => onTrash(note.id)}>
                       <Trash className="mr-2 h-4 w-4" aria-hidden="true" /> Move to Trash
                     </DropdownMenuItem>
@@ -295,7 +300,7 @@ export default function NoteCard({
           </DropdownMenu>
         </div>
       </CardHeader>
-      <CardContent 
+      <CardContent
         className="p-4 pt-0 flex-1 overflow-hidden"
         aria-labelledby={`note-title-${note.id}`}
       >
@@ -305,12 +310,12 @@ export default function NoteCard({
               {renderTextContent(note.content)}
             </div>
             {note.imageUrl && (
-              <div className="mt-2 aspect-video relative overflow-hidden rounded-md">
-                <Image 
-                  src={note.imageUrl} 
+              <div className="mt-2 aspect-video relative overflow-hidden rounded-md border border-border/20">
+                <Image
+                  src={note.imageUrl}
                   alt={note.title ? `Image for note titled ${note.title}` : `Image for note ${note.id}`}
-                  fill={true} 
-                  style={{objectFit:"cover"}} 
+                  fill={true}
+                  style={{objectFit:"cover"}}
                   data-ai-hint={note.dataAiHint || "abstract texture"}
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   priority={note.isPinned}
@@ -320,12 +325,12 @@ export default function NoteCard({
           </>
         )}
         {note.type === 'canvas' && note.canvasData && (
-           <div className="mt-2 aspect-video relative overflow-hidden rounded-md border bg-slate-50"> 
-            <Image 
-              src={note.canvasData} 
+           <div className="mt-2 aspect-video relative overflow-hidden rounded-md border border-border/50 bg-slate-50 dark:bg-slate-800/50">
+            <Image
+              src={note.canvasData}
               alt={note.title ? `Canvas drawing for note titled ${note.title}` : `Canvas drawing for note ${note.id}`}
-              fill={true} 
-              style={{objectFit:"contain"}} 
+              fill={true}
+              style={{objectFit:"contain"}}
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
               priority={note.isPinned}
               data-ai-hint="drawing sketch"
@@ -333,10 +338,10 @@ export default function NoteCard({
           </div>
         )}
       </CardContent>
-      <CardFooter 
-        className="p-4 flex flex-col items-start space-y-2 text-xs" 
+      <CardFooter
+        className="p-4 flex flex-col items-start space-y-2 text-xs"
         id={`note-meta-${note.id}`}
-        onClick={(e) => e.stopPropagation()} 
+        onClick={(e) => e.stopPropagation()}
       >
         <div className="flex flex-wrap gap-1 mt-auto pt-1">
           {note.tags.map((tag) => (
@@ -368,3 +373,4 @@ export default function NoteCard({
   );
 }
 
+    
