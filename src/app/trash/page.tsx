@@ -30,21 +30,19 @@ export default function TrashPage() {
 
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      try {
-        const storedNotes = localStorage.getItem('stickycanvas-notes');
-        if (storedNotes) {
-          setAllNotes(JSON.parse(storedNotes));
-        } else {
-          setAllNotes([]); // No initial data if localStorage is empty for trash
-        }
-      } catch (error) {
-        console.error("Failed to parse notes from localStorage", error);
-        setAllNotes([]); 
+    // Load notes from localStorage
+    try {
+      const storedNotes = localStorage.getItem('stickycanvas-notes');
+      if (storedNotes) {
+        setAllNotes(JSON.parse(storedNotes));
+      } else {
+        setAllNotes([]); // No initial data if localStorage is empty for trash
       }
-      setIsLoading(false);
-    }, 500); // Simulate loading
-    return () => clearTimeout(timer);
+    } catch (error) {
+      console.error("Failed to parse notes from localStorage", error);
+      setAllNotes([]); 
+    }
+    setIsLoading(false);
   }, []);
 
   useEffect(() => {
@@ -118,6 +116,7 @@ export default function TrashPage() {
               <NoteCard
                 key={note.id}
                 note={note}
+                onEdit={() => { /* Editing disabled for trashed notes */ }}
                 onUpdate={(id, updates) => { /* Updates are disabled for trashed notes via UI, but handler needed */
                    setAllNotes(prev => prev.map(n => n.id === id ? {...n, ...updates, updatedAt: new Date().toISOString()} : n));
                 }}

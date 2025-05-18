@@ -14,7 +14,7 @@ const initialNotesData: Note[] = [
   {
     id: '1',
     title: 'Welcome to StickyCanvas!',
-    content: 'This is your first note. You can edit me by clicking on my title or content.\n\n**Try this:**\n* Edit me!\n* Pin me!\n* Explore Markdown formatting like **bold** and *italic* text, or create lists.\n* Change my color or add tags via the editor!',
+    content: 'This is your first note. You can edit me by clicking on my title or content.\n\n**Try this:**\n* Edit me!\n* Pin me!\n* Explore Markdown formatting like **bold** and *italic* text, or create lists.\n* You can also use <u>underline</u> tags.\n* Change my color or add tags via the editor!',
     color: '#FFFACD', 
     tags: [{ id: 'tag1', name: 'Welcome' }],
     isPinned: false,
@@ -63,21 +63,19 @@ export default function HomePage() {
   const [editingNote, setEditingNote] = useState<Note | null>(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      try {
-        const storedNotes = localStorage.getItem('stickycanvas-notes');
-        if (storedNotes) {
-          setAllNotes(JSON.parse(storedNotes));
-        } else {
-          setAllNotes(initialNotesData);
-        }
-      } catch (error) {
-        console.error("Failed to parse notes from localStorage", error);
+    // Load notes from localStorage
+    try {
+      const storedNotes = localStorage.getItem('stickycanvas-notes');
+      if (storedNotes) {
+        setAllNotes(JSON.parse(storedNotes));
+      } else {
         setAllNotes(initialNotesData);
       }
-      setIsLoading(false);
-    }, 500);
-    return () => clearTimeout(timer);
+    } catch (error) {
+      console.error("Failed to parse notes from localStorage", error);
+      setAllNotes(initialNotesData);
+    }
+    setIsLoading(false);
   }, []);
 
   useEffect(() => {

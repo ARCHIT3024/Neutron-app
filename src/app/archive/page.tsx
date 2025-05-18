@@ -17,21 +17,19 @@ export default function ArchivePage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      try {
-        const storedNotes = localStorage.getItem('stickycanvas-notes');
-        if (storedNotes) {
-          setAllNotes(JSON.parse(storedNotes));
-        } else {
-          setAllNotes([]); 
-        }
-      } catch (error) {
-        console.error("Failed to parse notes from localStorage", error);
+    // Load notes from localStorage
+    try {
+      const storedNotes = localStorage.getItem('stickycanvas-notes');
+      if (storedNotes) {
+        setAllNotes(JSON.parse(storedNotes));
+      } else {
         setAllNotes([]); 
       }
-      setIsLoading(false);
-    }, 500);
-    return () => clearTimeout(timer);
+    } catch (error) {
+      console.error("Failed to parse notes from localStorage", error);
+      setAllNotes([]); 
+    }
+    setIsLoading(false);
   }, []);
 
   useEffect(() => {
@@ -118,6 +116,7 @@ export default function ArchivePage() {
               <NoteCard
                 key={note.id}
                 note={note}
+                onEdit={() => { /* Editing disabled for archived notes */ }}
                 onUpdate={handleUpdateNoteStub} // Content/pin updates disabled for archived notes in NoteCard
                 onUnarchive={handleUnarchiveNote}
                 onTrash={handleMoveToTrashFromArchive}
