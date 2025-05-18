@@ -1,5 +1,5 @@
-# Neutron (via Firebase Studio)
+# Neutron
 
-This is a NextJS starter app named Neutron, built with Firebase Studio.
+This is a NextJS starter app named Neutron.
 
 To get started, take a look at src/app/page.tsx.
