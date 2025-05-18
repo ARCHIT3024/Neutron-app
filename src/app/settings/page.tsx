@@ -28,7 +28,7 @@ export default function SettingsPage() {
         <SettingsIconLucide className="w-24 h-24 text-muted-foreground mb-6" aria-hidden="true" />
         <h2 className="text-3xl font-semibold mb-3">App Settings</h2>
         <p className="text-muted-foreground mb-6 max-w-md">
-          Configure your StickyCanvas experience.
+          Configure your Neutron experience.
         </p>
         
         <div className="flex items-center space-x-3 my-4 p-4 border rounded-lg shadow-sm bg-card">
@@ -60,4 +60,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-

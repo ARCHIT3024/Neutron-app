@@ -14,46 +14,38 @@ import {
   useSidebar, 
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
-import { Home, Archive, Trash2, StickyNote, Settings, LogOut, PanelLeft, Pin, PinOff } from 'lucide-react';
+import { Home, Archive, Trash2, StickyNote, Settings, LogOut, PanelLeft } from 'lucide-react'; // Pin, PinOff removed as button is removed
 import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+
 
 export default function AppSidebar() {
   const pathname = usePathname(); 
-  const { visualState, isMobile, toggleOverallSidebar, isPinned, togglePin } = useSidebar(); 
+  const { visualState, isMobile, toggleOverallSidebar } = useSidebar(); 
 
   return (
     <Sidebar collapsible="icon" variant="sidebar" side="left">
       <SidebarHeader className="h-16 flex items-center justify-between p-2">
         <div className="flex items-center gap-2 flex-grow min-w-0" data-testid="sidebar-header-content">
-          <Button variant="ghost" size="icon" className="shrink-0" asChild>
-            <Link href="/" aria-label="StickyCanvas Home">
-              <StickyNote className="size-6 text-primary" />
-            </Link>
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" className="shrink-0" asChild>
+                <Link href="/" aria-label="Neutron Home">
+                  <StickyNote className="size-6 text-primary" />
+                </Link>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right" align="center" hidden={visualState !== "collapsed" || isMobile}>
+              <p>Neutron</p>
+            </TooltipContent>
+          </Tooltip>
           <h2 className={cn(
             "text-lg font-semibold text-sidebar-foreground truncate",
-            // Always hide text if visualState is collapsed on desktop
             (visualState === 'collapsed' && !isMobile) && "hidden" 
           )}>
-            StickyCanvas
+            Neutron
           </h2>
         </div>
-        {!isMobile && ( // Show Pin/Unpin button only on desktop
-           <Button
-            variant="ghost"
-            size="icon"
-            onClick={togglePin} // This now toggles the pinned state
-            className={cn(
-                "shrink-0 text-sidebar-foreground hover:text-sidebar-primary",
-                visualState === 'collapsed' && "hidden" // Hide pin button when collapsed
-            )}
-            aria-label={isPinned ? "Unpin sidebar" : "Pin sidebar"}
-            aria-pressed={isPinned}
-            title={isPinned ? "Unpin sidebar" : "Pin sidebar"}
-          >
-            {isPinned ? <PinOff className="size-5" /> : <Pin className="size-5" />}
-          </Button>
-        )}
          {isMobile && ( 
             <Button
                 variant="ghost"
@@ -140,4 +132,3 @@ export default function AppSidebar() {
     </Sidebar>
   );
 }
-

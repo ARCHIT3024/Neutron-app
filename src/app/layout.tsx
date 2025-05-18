@@ -6,7 +6,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import AppSidebar from '@/components/AppSidebar';
 import { SidebarInset } from '@/components/ui/sidebar';
-import { ThemeProvider } from '@/hooks/use-theme'; // Added import
+import { ThemeProvider } from '@/hooks/use-theme';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -19,8 +19,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'StickyCanvas',
-  description: 'Interactive sticky notes and canvas app.',
+  title: 'Neutron',
+  description: 'Interactive notes and canvas app by Neutron.',
 };
 
 export default function RootLayout({
@@ -31,7 +31,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <ThemeProvider defaultTheme="light" storageKey="stickycanvas-theme">
+        <ThemeProvider defaultTheme="light" storageKey="neutron-theme">
           <SidebarProvider defaultOpen={false}>
             <AppSidebar />
             <SidebarInset>

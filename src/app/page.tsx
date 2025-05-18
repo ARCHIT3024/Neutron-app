@@ -16,13 +16,13 @@ import CanvasNoteDialog from '@/components/CanvasNoteDialog';
 const initialNotesData: Note[] = [
   {
     id: '1',
-    title: 'Welcome to StickyCanvas!',
+    title: 'Welcome to Neutron!',
     content: 'This is your first note. You can edit me by clicking on my title or content.\n\n**Try this:**\n* Edit me!\n* Pin me!\n* Explore Markdown formatting like **bold** and *italic* text, or create lists.\n* You can also use <u>underline</u> tags.\n* Change my color or add tags via the editor!',
     color: '#FFFACD', 
     tags: [{ id: 'tag1', name: 'Welcome' }],
     isPinned: false,
-    imageUrl: 'https://placehold.co/600x400.png', // Example image
-    dataAiHint: 'welcome abstract', // Example hint
+    imageUrl: 'https://placehold.co/600x400.png', 
+    dataAiHint: 'welcome abstract', 
     createdAt: new Date(Date.now() - 86400000).toISOString(), 
     updatedAt: new Date().toISOString(),
     status: 'active',
@@ -75,7 +75,7 @@ export default function HomePage() {
 
   useEffect(() => {
     try {
-      const storedNotes = localStorage.getItem('stickycanvas-notes');
+      const storedNotes = localStorage.getItem('stickycanvas-notes'); // Keeping old key for existing users, new name is neutron-notes in layout for theme
       if (storedNotes) {
         setAllNotes(JSON.parse(storedNotes));
       } else {
@@ -91,7 +91,7 @@ export default function HomePage() {
   useEffect(() => {
     if (!isLoading) {
         try {
-            localStorage.setItem('stickycanvas-notes', JSON.stringify(allNotes));
+            localStorage.setItem('stickycanvas-notes', JSON.stringify(allNotes)); // Keeping old key for existing users
         } catch (error) {
             console.error("Failed to save notes to localStorage", error);
         }
@@ -339,6 +339,7 @@ export default function HomePage() {
   );
 }
 
+// Using a generic SVG icon as a placeholder
 const StickyNoteIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
