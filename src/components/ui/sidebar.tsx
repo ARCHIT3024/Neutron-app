@@ -30,7 +30,7 @@ const SIDEBAR_KEYBOARD_SHORTCUT = "b"
 type SidebarContextType = {
   visualState: "expanded" | "collapsed"
   isPinned: boolean
-  setVisualOpen: (open: boolean) => void
+  // setVisualOpen: (open: boolean) => void // No longer needed for hover
   togglePin: () => void
   openMobileSheet: boolean
   setOpenMobileSheet: (open: boolean) => void
@@ -85,12 +85,7 @@ const SidebarProvider = React.forwardRef<
     });
 
     const isPinned = pinnedOpenProp ?? _isPinned
-    const [_visualOpen, _setVisualOpen] = React.useState(isPinned)
     
-    const setVisualOpen = React.useCallback((value: boolean) => {
-      _setVisualOpen(value);
-    }, []);
-
     const setPinnedState = React.useCallback(
       (newPinnedState: boolean) => {
         if (setPinnedOpenProp) {
@@ -98,17 +93,11 @@ const SidebarProvider = React.forwardRef<
         } else {
           _setIsPinned(newPinnedState)
         }
-        _setVisualOpen(newPinnedState); 
         document.cookie = `${SIDEBAR_COOKIE_NAME}=${newPinnedState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`
       },
       [setPinnedOpenProp]
     )
     
-    React.useEffect(() => {
-        _setVisualOpen(isPinned);
-    }, [isPinned]);
-
-
     const togglePin = React.useCallback(() => {
       setPinnedState(!isPinned)
     }, [isPinned, setPinnedState])
@@ -135,13 +124,13 @@ const SidebarProvider = React.forwardRef<
       return () => window.removeEventListener("keydown", handleKeyDown)
     }, [toggleOverallSidebar])
 
-    const visualState = _visualOpen && !isMobile ? "expanded" : "collapsed"
+    const visualState = isPinned && !isMobile ? "expanded" : "collapsed"
 
     const contextValue = React.useMemo<SidebarContextType>(
       () => ({
         visualState,
         isPinned,
-        setVisualOpen,
+        // setVisualOpen, // Removed
         togglePin,
         isMobile,
         openMobileSheet,
@@ -151,7 +140,7 @@ const SidebarProvider = React.forwardRef<
       [
         visualState,
         isPinned,
-        setVisualOpen,
+        // setVisualOpen, // Removed
         togglePin,
         isMobile,
         openMobileSheet,
@@ -199,7 +188,7 @@ const Sidebar = React.forwardRef<
     {
       side = "left",
       variant = "sidebar",
-      collapsible = "icon", // Default to icon collapsible
+      collapsible = "icon", 
       className,
       children,
       ...props
@@ -211,21 +200,8 @@ const Sidebar = React.forwardRef<
       visualState, 
       openMobileSheet, 
       setOpenMobileSheet,
-      setVisualOpen,
-      isPinned
     } = useSidebar()
 
-    const handleMouseEnter = () => {
-      if (!isMobile && collapsible === "icon") { // Only expand on hover if collapsible is 'icon'
-        setVisualOpen(true);
-      }
-    };
-
-    const handleMouseLeave = () => {
-      if (!isMobile && collapsible === "icon" && !isPinned) { // Only collapse on leave if collapsible and not pinned
-        setVisualOpen(false);
-      }
-    };
 
     if (collapsible === "none") {
       return (
@@ -268,12 +244,11 @@ const Sidebar = React.forwardRef<
       <div
         ref={ref}
         className="group peer hidden md:block text-sidebar-foreground"
-        data-state={visualState}
-        data-collapsible={visualState === "collapsed" ? collapsible : ""} // Apply collapsible type for styling
+        data-state={visualState} // visualState is now 'expanded' or 'collapsed' based on isPinned
+        data-collapsible={visualState === "collapsed" ? collapsible : ""} 
         data-variant={variant}
         data-side={side}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
+        // Removed onMouseEnter and onMouseLeave
       >
         <div
           className={cn(
@@ -281,7 +256,6 @@ const Sidebar = React.forwardRef<
             visualState === "expanded" ? "w-[--sidebar-width]" : "w-[--sidebar-width-icon]",
             "group-data-[collapsible=offcanvas]:w-0",
             "group-data-[side=right]:rotate-180",
-             // Adjust width based on collapsible type when collapsed
             visualState === "collapsed" && collapsible === "icon" ? 
               (variant === "floating" || variant === "inset"
                 ? "w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4))]"
@@ -301,7 +275,7 @@ const Sidebar = React.forwardRef<
                 (variant === "floating" || variant === "inset"
                   ? "w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4)_+2px)]"
                   : "w-[--sidebar-width-icon] group-data-[side=left]:border-r group-data-[side=right]:border-l") 
-                : "w-[--sidebar-width]"), // If not icon collapsible, keep full width or offcanvas logic
+                : "w-[--sidebar-width]"), 
             className
           )}
           {...props}
@@ -323,9 +297,9 @@ const SidebarTrigger = React.forwardRef<
   React.ElementRef<typeof Button>,
   React.ComponentProps<typeof Button>
 >(({ className, onClick, ...props }, ref) => {
-  const { toggleOverallSidebar, isMobile } = useSidebar() // Use isMobile to conditionally render/hide
+  const { toggleOverallSidebar, isMobile } = useSidebar() 
 
-  if (!isMobile) { // Only render for mobile, desktop has pin button
+  if (!isMobile) { 
     return null;
   }
 
@@ -338,7 +312,7 @@ const SidebarTrigger = React.forwardRef<
       className={cn("h-7 w-7", className)}
       onClick={(event) => {
         onClick?.(event)
-        toggleOverallSidebar()
+        toggleOverallSidebar() // On mobile, this toggles the sheet. On desktop, it toggles pin.
       }}
       {...props}
     >
@@ -353,9 +327,9 @@ const SidebarRail = React.forwardRef<
   HTMLButtonElement,
   React.ComponentProps<"button">
 >(({ className, ...props }, ref) => {
-  const { togglePin, isMobile } = useSidebar() // Changed to togglePin
+  const { togglePin, isMobile } = useSidebar() 
 
-  if (isMobile) return null; // Rail not needed on mobile
+  if (isMobile) return null; 
 
   return (
     <button
@@ -577,7 +551,7 @@ const SidebarMenuItem = React.forwardRef<
 SidebarMenuItem.displayName = "SidebarMenuItem"
 
 const sidebarMenuButtonVariants = cva(
-  "peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-none ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-2 group-data-[collapsible=icon]:justify-center [&>svg]:size-4 [&>svg]:shrink-0 group-data-[collapsible=icon]:[&>span:last-child]:hidden",
+  "peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-none ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:[&>span:last-child]:hidden",
   {
     variants: {
       variant: {
@@ -588,7 +562,7 @@ const sidebarMenuButtonVariants = cva(
       size: {
         default: "h-8 text-sm",
         sm: "h-7 text-xs",
-        lg: "h-12 text-sm group-data-[collapsible=icon]:!p-0", // p-0 could be problematic for centering icon in lg if not square
+        lg: "h-12 text-sm group-data-[collapsible=icon]:!p-0", 
       },
     },
     defaultVariants: {
@@ -614,7 +588,7 @@ const SidebarMenuButton = React.forwardRef<
       size = "default",
       tooltip,
       className,
-      children, // Ensure children is passed through
+      children, 
       ...props
     },
     ref
@@ -642,8 +616,6 @@ const SidebarMenuButton = React.forwardRef<
     if (typeof tooltip === "string") {
       tooltip = {
         children: tooltip,
-        // side: "right", // Default side for tooltips for collapsed sidebar icons
-        // align: "center",
       }
     }
 
@@ -651,8 +623,8 @@ const SidebarMenuButton = React.forwardRef<
       <Tooltip>
         <TooltipTrigger asChild>{button}</TooltipTrigger>
         <TooltipContent
-          side="right" // Explicitly set default side
-          align="center" // Explicitly set default align
+          side="right" 
+          align="center" 
           hidden={visualState !== "collapsed" || isMobile} 
           {...tooltip}
         />
@@ -829,3 +801,4 @@ export {
   SidebarTrigger,
   useSidebar,
 }
+

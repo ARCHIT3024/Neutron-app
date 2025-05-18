@@ -32,17 +32,21 @@ export default function AppSidebar() {
           </Button>
           <h2 className={cn(
             "text-lg font-semibold text-sidebar-foreground truncate",
+            // Always hide text if visualState is collapsed on desktop
             (visualState === 'collapsed' && !isMobile) && "hidden" 
           )}>
             StickyCanvas
           </h2>
         </div>
-        {!isMobile && visualState === 'expanded' && (
+        {!isMobile && ( // Show Pin/Unpin button only on desktop
            <Button
             variant="ghost"
             size="icon"
-            onClick={togglePin}
-            className="shrink-0 text-sidebar-foreground hover:text-sidebar-primary"
+            onClick={togglePin} // This now toggles the pinned state
+            className={cn(
+                "shrink-0 text-sidebar-foreground hover:text-sidebar-primary",
+                visualState === 'collapsed' && "hidden" // Hide pin button when collapsed
+            )}
             aria-label={isPinned ? "Unpin sidebar" : "Pin sidebar"}
             aria-pressed={isPinned}
             title={isPinned ? "Unpin sidebar" : "Pin sidebar"}
@@ -126,10 +130,6 @@ export default function AppSidebar() {
               tooltip={{ children: 'Log Out', side: 'right', align: 'center' }}
               aria-label="Log Out (not implemented)"
               aria-disabled="true"
-              // Add onClick and role when functionality is implemented
-              // onClick={() => console.log("Log out clicked")} 
-              // role="button"
-              // tabIndex={0} // Ensure it's focusable if it becomes a real button
             >
               <LogOut />
               <span>Log Out</span>
