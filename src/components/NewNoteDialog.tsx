@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
-import { Palette, Tags as TagsIconLucide, Bold, Underline, List, Check } from 'lucide-react'; // Renamed Tags to TagsIconLucide
+import { Palette, Tags as TagsIconLucide, Bold, Underline, List, Check } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import type { Note, Tag } from '@/types';
 
@@ -35,7 +35,7 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
   const [selectedColor, setSelectedColor] = useState<string>(PRESET_COLORS[0]);
   const [tagsString, setTagsString] = useState<string>('');
   const contentTextareaRef = useRef<HTMLTextAreaElement>(null);
-  const titleInputRef = useRef<HTMLInputElement>(null); // Ref for title input
+  const titleInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -44,21 +44,21 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
         setContent(noteToEdit.content);
         setSelectedColor(noteToEdit.color || PRESET_COLORS[0]);
         setTagsString(noteToEdit.tags.map(tag => tag.name).join(', '));
+        // Auto-focus content for existing notes, at the end of the text
+        setTimeout(() => {
+            contentTextareaRef.current?.focus();
+            contentTextareaRef.current?.setSelectionRange(contentTextareaRef.current.value.length, contentTextareaRef.current.value.length);
+        }, 100);
       } else {
         setTitle('');
         setContent('');
         setSelectedColor(PRESET_COLORS[0]);
         setTagsString('');
+        // Auto-focus title for new notes
+        setTimeout(() => {
+            titleInputRef.current?.focus();
+        }, 100);
       }
-      // Auto-focus title input when dialog opens for a new note, or content for existing
-      setTimeout(() => {
-        if (noteToEdit) {
-          contentTextareaRef.current?.focus();
-          contentTextareaRef.current?.setSelectionRange(contentTextareaRef.current.value.length, contentTextareaRef.current.value.length);
-        } else {
-          titleInputRef.current?.focus();
-        }
-      }, 100);
     }
   }, [isOpen, noteToEdit]);
 
@@ -67,7 +67,7 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
       .split(',')
       .map(tag => tag.trim())
       .filter(tagName => tagName !== '')
-      .map(tagName => ({ id: crypto.randomUUID(), name: tagName })); // Ensure new IDs for tags if structure changes
+      .map(tagName => ({ id: crypto.randomUUID(), name: tagName }));
     
     onSave({
       id: noteToEdit?.id,
@@ -76,12 +76,12 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
       color: selectedColor,
       tags: parsedTags,
     });
-    onClose();
+    // onClose(); // Closing is now handled by the Page component after save
   };
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {
-      onClose(); // This will be triggered by DialogClose or clicking outside
+      onClose(); 
     }
   };
 
@@ -99,10 +99,10 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
       case 'bold':
         if (selectedText) {
           newContent = `${content.substring(0, selectionStart)}**${selectedText}**${content.substring(selectionEnd)}`;
-          cursorPosition = selectionEnd + 4;
+          cursorPosition = selectionEnd + 4; // After closing **
         } else {
           newContent = `${content.substring(0, selectionStart)}****${content.substring(selectionEnd)}`;
-          cursorPosition = selectionStart + 2;
+          cursorPosition = selectionStart + 2; // Inside ****
         }
         break;
       case 'list':
@@ -110,21 +110,28 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
           const lines = selectedText.split('\n');
           const listifiedLines = lines.map(line => `* ${line}`).join('\n');
           newContent = `${content.substring(0, selectionStart)}${listifiedLines}${content.substring(selectionEnd)}`;
-          cursorPosition = selectionEnd + (lines.length * 2); // Approximate
+          cursorPosition = selectionEnd + (lines.length * 2); 
         } else {
           const currentLineStart = content.lastIndexOf('\n', selectionStart -1) + 1;
           const prefix = (currentLineStart === 0 || content.charAt(currentLineStart-1) === '\n') && selectionStart !== 0 ? '' : '\n';
           newContent = `${content.substring(0, selectionStart)}${prefix}* ${content.substring(selectionEnd)}`;
-          cursorPosition = selectionStart + prefix.length + 2;
+          cursorPosition = selectionStart + prefix.length + 2; // After "* "
         }
         break;
       case 'underline':
-        alert("Underline feature: Standard Markdown does not support underline. If you need it, you can use <u>HTML tags</u>, but ensure your note display logic can render HTML content.");
-        return; 
+        if (selectedText) {
+          newContent = `${content.substring(0, selectionStart)}<u>${selectedText}</u>${content.substring(selectionEnd)}`;
+          cursorPosition = selectionEnd + 7; // After </u> 
+        } else {
+          newContent = `${content.substring(0, selectionStart)}<u></u>${content.substring(selectionEnd)}`;
+          cursorPosition = selectionStart + 3; // Inside <u></u>
+        }
+        break;
     }
     
     setContent(newContent);
     
+    // Refocus and set cursor position
     setTimeout(() => {
       textarea.focus();
       textarea.setSelectionRange(cursorPosition, cursorPosition);
@@ -138,7 +145,6 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
         className="sm:max-w-[580px] bg-card shadow-xl rounded-lg"
         style={{ backgroundColor: selectedColor, transition: 'background-color 0.3s ease' }}
         onPointerDownOutside={(e) => {
-          // Prevent closing if clicking on a popover trigger within the dialog
           if ((e.target as HTMLElement)?.closest('[data-radix-popper-content-wrapper]')) {
             e.preventDefault();
           }
@@ -172,7 +178,7 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
               id="note-content"
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="Start typing your note here..."
+              placeholder="Start typing your note here... (Supports Markdown for **bold**, *italic*, lists, and &lt;u&gt;underline&lt;/u&gt;)"
               className="min-h-[150px] text-sm bg-background/80 border-border focus:ring-primary focus:border-primary rounded-md p-3"
             />
           </div>
@@ -278,15 +284,19 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
   );
 };
 
+// Helper to determine if text color should be light or dark based on background
 const getTextColorForBackground = (bgColor?: string): string => {
-  if (!bgColor || !bgColor.startsWith('#') || bgColor.length < 7) return 'hsl(var(--foreground))'; 
+  if (!bgColor || !bgColor.startsWith('#') || bgColor.length < 7) return 'hsl(var(--foreground))'; // Default if color is invalid
   try {
     const r = parseInt(bgColor.slice(1, 3), 16);
     const g = parseInt(bgColor.slice(3, 5), 16);
     const b = parseInt(bgColor.slice(5, 7), 16);
+    // HSP (Highly Sensitive Poo) equation from http://alienryderflex.com/hsp.html
     const hsp = Math.sqrt(0.299 * (r * r) + 0.587 * (g * g) + 0.114 * (b * b));
-    return hsp > 127.5 ? '#000000' : '#FFFFFF'; 
+    // Using hsp to determine text color
+    return hsp > 127.5 ? '#000000' : '#FFFFFF'; // If light background, use dark text, else light text
   } catch (e) {
+    // Fallback in case of parsing error
     return 'hsl(var(--foreground))'; 
   }
 };
