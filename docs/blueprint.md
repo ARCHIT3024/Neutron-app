@@ -1,4 +1,4 @@
-# **App Name**: StickyCanvas
+# **App Name**: Neutron
 
 ## Core Features:
 
