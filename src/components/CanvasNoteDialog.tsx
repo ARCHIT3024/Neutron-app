@@ -51,6 +51,8 @@ const CanvasNoteDialog: FC<CanvasNoteDialogProps> = ({ isOpen, onClose, onSave, 
         setTitle(noteToEdit.title || '');
         setSelectedCardColor(noteToEdit.color || PRESET_COLORS[0]);
         setTagsString(noteToEdit.tags?.map(tag => tag.name).join(', ') || '');
+        // For canvas, focus might not be on title initially, depends on interaction model.
+        // Let's keep focus on title for consistency.
         setTimeout(() => titleInputRef.current?.focus(), 100);
       } else {
         setTitle('');
@@ -65,6 +67,7 @@ const CanvasNoteDialog: FC<CanvasNoteDialogProps> = ({ isOpen, onClose, onSave, 
     const canvasData = getCanvasDataRef.current?.();
     if (!canvasData) {
       console.error("Canvas data is not available");
+      // Potentially show a toast to the user here if canvas is empty and required
       return;
     }
     
@@ -91,9 +94,12 @@ const CanvasNoteDialog: FC<CanvasNoteDialogProps> = ({ isOpen, onClose, onSave, 
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[600px] md:max-w-[700px] lg:max-w-[800px] xl:max-w-[900px] bg-card shadow-xl rounded-lg p-6">
+      <DialogContent 
+        className="sm:max-w-[600px] md:max-w-[700px] lg:max-w-[800px] xl:max-w-[900px] bg-card shadow-xl rounded-lg p-6"
+        aria-labelledby="canvas-note-dialog-title"
+      >
         <DialogHeader>
-          <DialogTitle className="text-lg font-semibold text-card-foreground">
+          <DialogTitle id="canvas-note-dialog-title" className="text-lg font-semibold text-card-foreground">
             {noteToEdit ? 'Edit Canvas Note' : 'Create New Canvas Note'}
           </DialogTitle>
         </DialogHeader>

@@ -14,12 +14,12 @@ import {
   useSidebar, 
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
-import { Home, Archive, Trash2, StickyNote, Settings, LogOut, PanelLeft } from 'lucide-react'; // Removed Pin, PinOff
+import { Home, Archive, Trash2, StickyNote, Settings, LogOut, PanelLeft, Pin, PinOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function AppSidebar() {
   const pathname = usePathname(); 
-  const { visualState, isMobile, toggleOverallSidebar } = useSidebar(); 
+  const { visualState, isMobile, toggleOverallSidebar, isPinned, togglePin } = useSidebar(); 
 
   return (
     <Sidebar collapsible="icon" variant="sidebar" side="left">
@@ -32,11 +32,24 @@ export default function AppSidebar() {
           </Button>
           <h2 className={cn(
             "text-lg font-semibold text-sidebar-foreground truncate",
-            visualState === 'collapsed' && !isMobile && "hidden" 
+            (visualState === 'collapsed' && !isMobile) && "hidden" 
           )}>
             StickyCanvas
           </h2>
         </div>
+        {!isMobile && visualState === 'expanded' && (
+           <Button
+            variant="ghost"
+            size="icon"
+            onClick={togglePin}
+            className="shrink-0 text-sidebar-foreground hover:text-sidebar-primary"
+            aria-label={isPinned ? "Unpin sidebar" : "Pin sidebar"}
+            aria-pressed={isPinned}
+            title={isPinned ? "Unpin sidebar" : "Pin sidebar"}
+          >
+            {isPinned ? <PinOff className="size-5" /> : <Pin className="size-5" />}
+          </Button>
+        )}
          {isMobile && ( 
             <Button
                 variant="ghost"
@@ -111,7 +124,8 @@ export default function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton 
               tooltip={{ children: 'Log Out', side: 'right', align: 'center' }}
-              aria-label="Log Out"
+              aria-label="Log Out (not implemented)"
+              aria-disabled="true"
               // Add onClick and role when functionality is implemented
               // onClick={() => console.log("Log out clicked")} 
               // role="button"
@@ -126,3 +140,4 @@ export default function AppSidebar() {
     </Sidebar>
   );
 }
+

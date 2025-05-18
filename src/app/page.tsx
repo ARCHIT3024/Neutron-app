@@ -271,7 +271,12 @@ export default function HomePage() {
           <h1 className="text-2xl font-semibold">My Notes</h1>
         </div>
         <div className="flex items-center gap-2">
-          <Button onClick={toggleTheme} variant="ghost" size="icon" aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>
+          <Button 
+            onClick={toggleTheme} 
+            variant="ghost" 
+            size="icon" 
+            aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+          >
             {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           </Button>
           <Button onClick={handleOpenNewNoteFlow} size="sm" aria-label="Create a new note">

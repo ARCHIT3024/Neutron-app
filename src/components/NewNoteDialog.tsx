@@ -219,9 +219,10 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
             e.preventDefault();
           }
         }}
+        aria-labelledby="note-editor-dialog-title"
       >
         <DialogHeader>
-          <DialogTitle className="text-lg font-semibold" style={{ color: mainDialogTextColor }}>
+          <DialogTitle id="note-editor-dialog-title" className="text-lg font-semibold" style={{ color: mainDialogTextColor }}>
             {noteToEdit ? 'Edit Note' : 'Create New Note'}
           </DialogTitle>
         </DialogHeader>
@@ -250,6 +251,7 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
               onChange={(e) => setContent(e.target.value)}
               placeholder="Start typing your note here..."
               className="min-h-[150px] text-sm bg-background/80 border-input focus:ring-primary focus:border-primary rounded-md p-3 text-foreground placeholder:text-muted-foreground"
+              aria-label="Note content"
             />
           </div>
           <div className="grid gap-2">
@@ -270,7 +272,7 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
                 <Label htmlFor="note-image-url-display" className="text-sm font-medium" style={{ color: mainDialogTextColor === '#000000' ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.7)'}}>
                 Current Image URL
                 </Label>
-                <p className="text-xs truncate p-2 rounded-md bg-background/50" style={{ color: mainDialogTextColor === '#000000' ? 'rgba(0,0,0,0.9)' : 'rgba(255,255,255,0.9)'}}>{imageUrl}</p>
+                <p id="note-image-url-display" className="text-xs truncate p-2 rounded-md bg-background/50" style={{ color: mainDialogTextColor === '#000000' ? 'rgba(0,0,0,0.9)' : 'rgba(255,255,255,0.9)'}}>{imageUrl}</p>
             </div>
             )}
            {imageUrl && imageUrl.startsWith('https://placehold.co') && (

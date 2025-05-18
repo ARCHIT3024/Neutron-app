@@ -18,7 +18,7 @@ import {
   Trash2,
   MoreVertical,
   Loader2,
-  Archive,
+  Archive as ArchiveIconLucide, // Renamed to avoid conflict
   ArchiveRestore, 
   RotateCcw, 
   Trash,
@@ -170,6 +170,7 @@ export default function NoteCard({
       onClick={!isViewOnly ? handleEditClick : undefined}
       onKeyDown={!isViewOnly ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleEditClick(); } } : undefined}
       tabIndex={!isViewOnly ? 0 : -1}
+      role={!isViewOnly ? "button" : undefined}
       aria-label={isViewOnly ? `Note: ${note.title || 'Untitled'}. This note is ${note.status}.` : `Edit note: ${note.title || 'Untitled'}`}
     >
       <CardHeader 
@@ -182,7 +183,8 @@ export default function NoteCard({
           <h3 
             className="text-xl font-bold truncate" 
             style={{ color: textColor }}
-            aria-label={`Note title: ${note.title || 'Untitled'}`}
+            aria-label={`Note title: ${note.title || 'Untitled'}`} // More direct label
+            id={`note-title-${note.id}`}
           >
             {note.title || 'Untitled'} {note.type === 'canvas' && <span className="text-xs font-normal opacity-70">(Canvas)</span>}
           </h3>
@@ -195,7 +197,7 @@ export default function NoteCard({
               onClick={(e) => { e.stopPropagation(); handleTogglePin(); }}
               className="hover:bg-white/20 focus:bg-white/20 active:scale-90 transform transition-transform duration-150 focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1" 
               style={{ color: textColor }}
-              aria-label={note.isPinned ? 'Unpin note' : 'Pin note'}
+              aria-label={note.isPinned ? `Unpin note titled ${note.title || 'Untitled'}` : `Pin note titled ${note.title || 'Untitled'}`}
               aria-pressed={note.isPinned}
               tabIndex={0}
             >
@@ -210,7 +212,7 @@ export default function NoteCard({
                 onClick={(e) => e.stopPropagation()} 
                 className="hover:bg-white/20 focus:bg-white/20 active:scale-90 transform transition-transform duration-150 focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1" 
                 style={{ color: textColor }}
-                aria-label="More options for this note"
+                aria-label={`More options for note titled ${note.title || 'Untitled'}`}
                 aria-haspopup="true"
                 tabIndex={0}
               >
@@ -220,6 +222,7 @@ export default function NoteCard({
             <DropdownMenuContent 
               align="end" 
               onClick={(e) => e.stopPropagation()} 
+              aria-labelledby={`note-title-${note.id}`}
             >
               {note.status === 'active' && (
                 <>
@@ -239,7 +242,7 @@ export default function NoteCard({
                   )}
                   {onArchive && (
                     <DropdownMenuItem onSelect={() => onArchive(note.id)}>
-                      <Archive className="mr-2 h-4 w-4" aria-hidden="true" /> Archive
+                      <ArchiveIconLucide className="mr-2 h-4 w-4" aria-hidden="true" /> Archive
                     </DropdownMenuItem>
                   )}
                   {note.type === 'text' && (
@@ -294,7 +297,7 @@ export default function NoteCard({
       </CardHeader>
       <CardContent 
         className="p-4 pt-0 flex-1 overflow-hidden"
-        aria-label={`Note content for: ${note.title || 'Untitled'}`}
+        aria-labelledby={`note-title-${note.id}`}
       >
         {note.type === 'text' && (
           <>
@@ -305,7 +308,7 @@ export default function NoteCard({
               <div className="mt-2 aspect-video relative overflow-hidden rounded-md">
                 <Image 
                   src={note.imageUrl} 
-                  alt={note.title || `Attachment for note ${note.id}`}
+                  alt={note.title ? `Image for note titled ${note.title}` : `Image for note ${note.id}`}
                   fill={true} 
                   style={{objectFit:"cover"}} 
                   data-ai-hint={note.dataAiHint || "abstract texture"}
@@ -320,7 +323,7 @@ export default function NoteCard({
            <div className="mt-2 aspect-video relative overflow-hidden rounded-md border bg-slate-50"> 
             <Image 
               src={note.canvasData} 
-              alt={note.title || `Canvas drawing for note ${note.id}`}
+              alt={note.title ? `Canvas drawing for note titled ${note.title}` : `Canvas drawing for note ${note.id}`}
               fill={true} 
               style={{objectFit:"contain"}} 
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"

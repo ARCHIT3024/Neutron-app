@@ -162,6 +162,7 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({ initialDataURL, backgroundC
           size="icon" 
           onClick={() => setTool('pencil')}
           aria-label="Pencil Tool"
+          aria-pressed={tool === 'pencil'}
           title="Pencil"
         >
           <Pencil className="h-4 w-4" />
@@ -171,6 +172,7 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({ initialDataURL, backgroundC
           size="icon" 
           onClick={() => setTool('eraser')}
           aria-label="Eraser Tool"
+          aria-pressed={tool === 'eraser'}
           title="Eraser"
         >
           <Eraser className="h-4 w-4" />
@@ -193,6 +195,7 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({ initialDataURL, backgroundC
                   style={{ backgroundColor: color, borderColor: currentColor === color ? 'hsl(var(--ring))' : 'hsl(var(--border))' }}
                   onClick={() => { setCurrentColor(color); setTool('pencil');}}
                   aria-label={`Set color to ${color}`}
+                  aria-pressed={currentColor === color}
                 >
                  {currentColor === color && <Check className="h-4 w-4" style={{color: getTextColorForBackground(color)}}/>}
                 </Button>
@@ -208,7 +211,7 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({ initialDataURL, backgroundC
             value={lineWidth} 
             onChange={(e) => setLineWidth(parseInt(e.target.value, 10))}
             className="w-20 h-2 bg-muted-foreground rounded-lg appearance-none cursor-pointer accent-primary"
-            aria-label="Line width"
+            aria-label={`Line width: ${lineWidth}`}
             title={`Line Width: ${lineWidth}`}
         />
 
@@ -231,6 +234,7 @@ const CanvasEditor: React.FC<CanvasEditorProps> = ({ initialDataURL, backgroundC
         onTouchEnd={stopDrawing}
         className="border border-input rounded-md cursor-crosshair"
         style={{touchAction: 'none'}} // Prevents page scroll on touch devices while drawing
+        aria-label="Drawing canvas"
       />
     </div>
   );
