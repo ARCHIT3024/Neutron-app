@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -6,8 +7,7 @@ import NoteCard from '@/components/NoteCard';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Loader2 } from 'lucide-react';
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
-import { v4 as uuidv4 } from 'uuid'; // Requires `npm install uuid @types/uuid`
-
+// Removed v4 as uuidv4 import as crypto.randomUUID is used
 
 // Sample initial notes - replace with Firebase data fetching later
 const initialNotesData: Note[] = [
@@ -17,7 +17,7 @@ const initialNotesData: Note[] = [
     color: '#FFFACD', // LemonChiffon
     tags: [{ id: 'tag1', name: 'Welcome' }],
     isPinned: false,
-    imageUrl: 'https://placehold.co/600x400.png',
+    imageUrl: 'https://placehold.co/600x400.png', // data-ai-hint will be in NoteCard
     createdAt: new Date(Date.now() - 86400000).toISOString(), // Yesterday
     updatedAt: new Date().toISOString(),
   },
@@ -49,29 +49,39 @@ export default function HomePage() {
   useEffect(() => {
     // Simulate fetching notes
     // In a real app, this would be an API call to Firebase
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       // Check if localStorage has notes
-      const storedNotes = localStorage.getItem('stickycanvas-notes');
-      if (storedNotes) {
-        setNotes(JSON.parse(storedNotes));
-      } else {
-        setNotes(initialNotesData);
+      try {
+        const storedNotes = localStorage.getItem('stickycanvas-notes');
+        if (storedNotes) {
+          setNotes(JSON.parse(storedNotes));
+        } else {
+          setNotes(initialNotesData);
+        }
+      } catch (error) {
+        console.error("Failed to parse notes from localStorage", error);
+        setNotes(initialNotesData); // Fallback to initial data on error
       }
       setIsLoading(false);
     }, 500);
+    return () => clearTimeout(timer); // Cleanup timer on unmount
   }, []);
   
   useEffect(() => {
     // Persist notes to localStorage whenever they change
     if (!isLoading) { // Only save after initial load
-        localStorage.setItem('stickycanvas-notes', JSON.stringify(notes));
+        try {
+            localStorage.setItem('stickycanvas-notes', JSON.stringify(notes));
+        } catch (error) {
+            console.error("Failed to save notes to localStorage", error);
+        }
     }
   }, [notes, isLoading]);
 
 
   const handleAddNote = () => {
     const newNote: Note = {
-      id: crypto.randomUUID(), // Use crypto.randomUUID for modern browsers
+      id: crypto.randomUUID(), 
       content: 'New Note! Click to edit...',
       color: '#FFFFFF', // Default white
       tags: [],
@@ -96,15 +106,15 @@ export default function HomePage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-full">
+      <div className="flex flex-col items-center justify-center h-full flex-1 p-4">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="ml-4 text-xl">Loading your canvas...</p>
+        <p className="ml-4 text-xl mt-4">Loading your canvas...</p>
       </div>
     );
   }
   
-  const pinnedNotes = notes.filter(note => note.isPinned).sort((a,b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
-  const unpinnedNotes = notes.filter(note => !note.isPinned).sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const pinnedNotes = notes.filter(note => note.isPinned).sort((a,b) => new Date(b.updatedAt).getTime() - new Date(a.createdAt).getTime()); // Pinned sorted by updatedAt
+  const unpinnedNotes = notes.filter(note => !note.isPinned).sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()); // Unpinned by createdAt
   const sortedNotes = [...pinnedNotes, ...unpinnedNotes];
 
   return (
@@ -163,4 +173,3 @@ const StickyNoteIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <path d="M15 3v6h6" />
   </svg>
 );
-
