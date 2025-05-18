@@ -24,21 +24,25 @@ export function ThemeProvider({
   defaultTheme = "light",
   storageKey = "stickycanvas-theme",
 }: ThemeProviderProps) {
-  const [theme, setThemeState] = useState<Theme>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const storedTheme = window.localStorage.getItem(storageKey) as Theme | null;
-        if (storedTheme) {
-          return storedTheme;
-        }
-      } catch (e) {
-        console.error("Error reading theme from localStorage", e);
-      }
-    }
-    return defaultTheme;
-  });
+  const [theme, setThemeState] = useState<Theme>(defaultTheme); // Initialize with defaultTheme
 
   useEffect(() => {
+    // This effect runs only on the client, after initial hydration
+    let storedThemeValue: Theme | null = null;
+    try {
+      storedThemeValue = window.localStorage.getItem(storageKey) as Theme | null;
+    } catch (e) {
+      console.error("Error reading theme from localStorage", e);
+    }
+
+    if (storedThemeValue && storedThemeValue !== defaultTheme) {
+      setThemeState(storedThemeValue);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty dependency array ensures this runs once on mount
+
+  useEffect(() => {
+    // This effect applies the theme class and saves to localStorage whenever the theme state changes
     const root = window.document.documentElement;
     root.classList.remove("light", "dark");
     root.classList.add(theme);
