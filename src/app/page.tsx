@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { PlusCircle, Loader2 } from 'lucide-react';
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 import { useToast } from '@/hooks/use-toast';
+import NewNoteDialog from '@/components/NewNoteDialog'; // Import the new dialog
 
 const initialNotesData: Note[] = [
   {
@@ -16,7 +17,7 @@ const initialNotesData: Note[] = [
     color: '#FFFACD', // LemonChiffon
     tags: [{ id: 'tag1', name: 'Welcome' }],
     isPinned: false,
-    imageUrl: 'https://placehold.co/600x400.png', 
+    imageUrl: 'https://placehold.co/600x400.png',
     dataAiHint: 'welcome abstract',
     createdAt: new Date(Date.now() - 86400000).toISOString(), // Yesterday
     updatedAt: new Date().toISOString(),
@@ -53,8 +54,9 @@ const initialNotesData: Note[] = [
 export default function HomePage() {
   const [allNotes, setAllNotes] = useState<Note[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { isMobile } = useSidebar(); 
+  const { isMobile } = useSidebar();
   const { toast } = useToast();
+  const [isNewNoteDialogOpen, setIsNewNoteDialogOpen] = useState(false); // State for dialog
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -67,15 +69,15 @@ export default function HomePage() {
         }
       } catch (error) {
         console.error("Failed to parse notes from localStorage", error);
-        setAllNotes(initialNotesData); 
+        setAllNotes(initialNotesData);
       }
       setIsLoading(false);
     }, 500);
-    return () => clearTimeout(timer); 
+    return () => clearTimeout(timer);
   }, []);
-  
+
   useEffect(() => {
-    if (!isLoading) { 
+    if (!isLoading) {
         try {
             localStorage.setItem('stickycanvas-notes', JSON.stringify(allNotes));
         } catch (error) {
@@ -85,11 +87,15 @@ export default function HomePage() {
   }, [allNotes, isLoading]);
 
 
-  const handleAddNote = () => {
+  const handleOpenNewNoteDialog = () => {
+    setIsNewNoteDialogOpen(true);
+  };
+
+  const handleSaveNewNote = (content: string) => {
     const newNote: Note = {
-      id: crypto.randomUUID(), 
-      content: 'New Note! Click to edit...',
-      color: '#FFFFFF', 
+      id: crypto.randomUUID(),
+      content: content, // Content from dialog
+      color: '#FFFFFF', // Default color, can be made customizable later
       tags: [],
       isPinned: false,
       createdAt: new Date().toISOString(),
@@ -99,6 +105,10 @@ export default function HomePage() {
       trashedAt: null,
     };
     setAllNotes((prevNotes) => [newNote, ...prevNotes]);
+    toast({
+      title: "Note Created",
+      description: "Your new note has been added to the board.",
+    });
   };
 
   const handleUpdateNote = (id: string, updates: Partial<Note>) => {
@@ -132,10 +142,10 @@ export default function HomePage() {
       description: "The note has been moved to the archive.",
     });
   };
-  
+
   const activeNotes = allNotes.filter(note => note.status === 'active');
-  const pinnedNotes = activeNotes.filter(note => note.isPinned).sort((a,b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()); 
-  const unpinnedNotes = activeNotes.filter(note => !note.isPinned).sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()); 
+  const pinnedNotes = activeNotes.filter(note => note.isPinned).sort((a,b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+  const unpinnedNotes = activeNotes.filter(note => !note.isPinned).sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   const sortedActiveNotes = [...pinnedNotes, ...unpinnedNotes];
 
   if (isLoading) {
@@ -151,10 +161,10 @@ export default function HomePage() {
     <div className="flex flex-col h-screen bg-background">
       <header className="flex items-center justify-between p-4 border-b sticky top-0 bg-background/80 backdrop-blur-sm z-10">
         <div className="flex items-center gap-2">
-          {isMobile && <SidebarTrigger aria-label="Toggle sidebar" />} 
+          {isMobile && <SidebarTrigger aria-label="Toggle sidebar" />}
           <h1 className="text-2xl font-semibold">My Notes</h1>
         </div>
-        <Button onClick={handleAddNote} size="sm">
+        <Button onClick={handleOpenNewNoteDialog} size="sm" aria-label="Create a new note">
           <PlusCircle className="mr-2 h-4 w-4" aria-hidden="true" /> New Note
         </Button>
       </header>
@@ -164,7 +174,7 @@ export default function HomePage() {
             <StickyNoteIcon className="w-16 h-16 text-muted-foreground mb-4" aria-hidden="true" />
             <h2 className="text-2xl font-semibold mb-2">No active notes yet!</h2>
             <p className="text-muted-foreground mb-4">Click "New Note" to get started or check your archive/trash.</p>
-            <Button onClick={handleAddNote}>
+            <Button onClick={handleOpenNewNoteDialog} aria-label="Create your first note">
               <PlusCircle className="mr-2 h-4 w-4" aria-hidden="true" /> Create Your First Note
             </Button>
           </div>
@@ -182,6 +192,11 @@ export default function HomePage() {
           </div>
         )}
       </main>
+      <NewNoteDialog
+        isOpen={isNewNoteDialogOpen}
+        onClose={() => setIsNewNoteDialogOpen(false)}
+        onSave={handleSaveNewNote}
+      />
     </div>
   );
 }
@@ -198,7 +213,7 @@ const StickyNoteIcon = (props: React.SVGProps<SVGSVGElement>) => (
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
-    aria-hidden="true" 
+    aria-hidden="true"
     {...props}
   >
     <path d="M15.5 3H5a2 2 0 0 0-2 2v14c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2V8.5L15.5 3Z" />
