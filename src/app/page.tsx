@@ -7,6 +7,7 @@ import NoteCard from '@/components/NoteCard';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Loader2 } from 'lucide-react';
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
+import { useToast } from '@/hooks/use-toast';
 
 const initialNotesData: Note[] = [
   {
@@ -16,8 +17,12 @@ const initialNotesData: Note[] = [
     tags: [{ id: 'tag1', name: 'Welcome' }],
     isPinned: false,
     imageUrl: 'https://placehold.co/600x400.png', 
+    dataAiHint: 'welcome abstract',
     createdAt: new Date(Date.now() - 86400000).toISOString(), // Yesterday
     updatedAt: new Date().toISOString(),
+    status: 'active',
+    archivedAt: null,
+    trashedAt: null,
   },
   {
     id: '2',
@@ -27,6 +32,9 @@ const initialNotesData: Note[] = [
     isPinned: true,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
+    status: 'active',
+    archivedAt: null,
+    trashedAt: null,
   },
   {
     id: '3',
@@ -36,26 +44,30 @@ const initialNotesData: Note[] = [
     isPinned: false,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
+    status: 'active',
+    archivedAt: null,
+    trashedAt: null,
   },
 ];
 
 export default function HomePage() {
-  const [notes, setNotes] = useState<Note[]>([]);
+  const [allNotes, setAllNotes] = useState<Note[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { isMobile } = useSidebar(); 
+  const { toast } = useToast();
 
   useEffect(() => {
     const timer = setTimeout(() => {
       try {
         const storedNotes = localStorage.getItem('stickycanvas-notes');
         if (storedNotes) {
-          setNotes(JSON.parse(storedNotes));
+          setAllNotes(JSON.parse(storedNotes));
         } else {
-          setNotes(initialNotesData);
+          setAllNotes(initialNotesData);
         }
       } catch (error) {
         console.error("Failed to parse notes from localStorage", error);
-        setNotes(initialNotesData); 
+        setAllNotes(initialNotesData); 
       }
       setIsLoading(false);
     }, 500);
@@ -65,12 +77,12 @@ export default function HomePage() {
   useEffect(() => {
     if (!isLoading) { 
         try {
-            localStorage.setItem('stickycanvas-notes', JSON.stringify(notes));
+            localStorage.setItem('stickycanvas-notes', JSON.stringify(allNotes));
         } catch (error) {
             console.error("Failed to save notes to localStorage", error);
         }
     }
-  }, [notes, isLoading]);
+  }, [allNotes, isLoading]);
 
 
   const handleAddNote = () => {
@@ -82,21 +94,37 @@ export default function HomePage() {
       isPinned: false,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      status: 'active',
+      archivedAt: null,
+      trashedAt: null,
     };
-    setNotes((prevNotes) => [newNote, ...prevNotes]);
+    setAllNotes((prevNotes) => [newNote, ...prevNotes]);
   };
 
   const handleUpdateNote = (id: string, updates: Partial<Note>) => {
-    setNotes((prevNotes) =>
+    setAllNotes((prevNotes) =>
       prevNotes.map((note) =>
         note.id === id ? { ...note, ...updates, updatedAt: new Date().toISOString() } : note
       )
     );
   };
 
-  const handleDeleteNote = (id: string) => {
-    setNotes((prevNotes) => prevNotes.filter((note) => note.id !== id));
+  const handleTrashNote = (id: string) => {
+    setAllNotes((prevNotes) =>
+      prevNotes.map((note) =>
+        note.id === id ? { ...note, status: 'trashed', trashedAt: new Date().toISOString(), updatedAt: new Date().toISOString() } : note
+      )
+    );
+    toast({
+      title: "Note Moved to Trash",
+      description: "The note has been moved to the trash.",
+    });
   };
+  
+  const activeNotes = allNotes.filter(note => note.status === 'active');
+  const pinnedNotes = activeNotes.filter(note => note.isPinned).sort((a,b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()); 
+  const unpinnedNotes = activeNotes.filter(note => !note.isPinned).sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()); 
+  const sortedActiveNotes = [...pinnedNotes, ...unpinnedNotes];
 
   if (isLoading) {
     return (
@@ -106,10 +134,6 @@ export default function HomePage() {
       </div>
     );
   }
-  
-  const pinnedNotes = notes.filter(note => note.isPinned).sort((a,b) => new Date(b.updatedAt).getTime() - new Date(a.createdAt).getTime()); 
-  const unpinnedNotes = notes.filter(note => !note.isPinned).sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()); 
-  const sortedNotes = [...pinnedNotes, ...unpinnedNotes];
 
   return (
     <div className="flex flex-col h-screen bg-background">
@@ -123,23 +147,23 @@ export default function HomePage() {
         </Button>
       </header>
       <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto">
-        {notes.length === 0 ? (
+        {sortedActiveNotes.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center">
             <StickyNoteIcon className="w-16 h-16 text-muted-foreground mb-4" aria-hidden="true" />
-            <h2 className="text-2xl font-semibold mb-2">No notes yet!</h2>
-            <p className="text-muted-foreground mb-4">Click "New Note" to get started.</p>
+            <h2 className="text-2xl font-semibold mb-2">No active notes yet!</h2>
+            <p className="text-muted-foreground mb-4">Click "New Note" to get started or check your archive/trash.</p>
             <Button onClick={handleAddNote}>
               <PlusCircle className="mr-2 h-4 w-4" aria-hidden="true" /> Create Your First Note
             </Button>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-            {sortedNotes.map((note) => (
+            {sortedActiveNotes.map((note) => (
               <NoteCard
                 key={note.id}
                 note={note}
                 onUpdate={handleUpdateNote}
-                onDelete={handleDeleteNote}
+                onTrash={handleTrashNote}
               />
             ))}
           </div>

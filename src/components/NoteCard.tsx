@@ -3,7 +3,7 @@
 
 import type { Note, Tag } from '@/types';
 import React, { useState, useEffect, useRef } from 'react';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +20,9 @@ import {
   MoreVertical,
   Loader2,
   Save,
+  Archive,
+  RotateCcw, // For Restore
+  Trash, // For Move to Trash
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -33,21 +36,30 @@ import Image from 'next/image';
 interface NoteCardProps {
   note: Note;
   onUpdate: (id: string, updates: Partial<Note>) => void;
-  onDelete: (id: string) => void;
+  onTrash?: (id: string) => void; // Moves to trash from active/archive
+  onRestore?: (id: string) => void; // Restores from trash to active
+  onDeletePermanently?: (id: string) => void; // Deletes forever from trash
+  // onArchive?: (id: string) => void; // Placeholder for future
+  // onUnarchive?: (id: string) => void; // Placeholder for future
 }
 
 // Utility to get contrasting text color (simplified)
-const getTextColorForBackground = (bgColor: string): string => {
-  if (!bgColor.startsWith('#')) return 'hsl(var(--card-foreground))'; // Default if not a hex
+const getTextColorForBackground = (bgColor?: string): string => {
+  if (!bgColor || !bgColor.startsWith('#')) return 'hsl(var(--card-foreground))';
   const r = parseInt(bgColor.slice(1, 3), 16);
   const g = parseInt(bgColor.slice(3, 5), 16);
   const b = parseInt(bgColor.slice(5, 7), 16);
-  // Simple brightness check
   return (r * 0.299 + g * 0.587 + b * 0.114) > 186 ? '#000000' : '#FFFFFF';
 };
 
 
-export default function NoteCard({ note, onUpdate, onDelete }: NoteCardProps) {
+export default function NoteCard({ 
+  note, 
+  onUpdate, 
+  onTrash,
+  onRestore,
+  onDeletePermanently 
+}: NoteCardProps) {
   const [content, setContent] = useState(note.content);
   const [isEditing, setIsEditing] = useState(false);
   const [isSummarizing, setIsSummarizing] = useState(false);
@@ -69,7 +81,7 @@ export default function NoteCard({ note, onUpdate, onDelete }: NoteCardProps) {
   };
 
   const handleSave = () => {
-    if (content !== note.content) { // Only save if content actually changed
+    if (content !== note.content) {
       onUpdate(note.id, { content, updatedAt: new Date().toISOString() });
       toast({ title: "Note Saved!", description: "Your changes have been saved." });
     }
@@ -110,31 +122,34 @@ export default function NoteCard({ note, onUpdate, onDelete }: NoteCardProps) {
     }
   };
 
+  const isTrashContext = !!(onRestore && onDeletePermanently);
+
   return (
     <Card
       className="flex flex-col h-full shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:scale-[1.01]"
       style={{ backgroundColor: note.color, color: textColor }}
       data-testid={`note-card-${note.id}`}
-      aria-labelledby={`note-title-${note.id}`} // Assuming a title might be added later or use content as accessible name part
+      aria-labelledby={`note-title-${note.id}`}
     >
       <CardHeader className="flex flex-row items-start justify-between p-4">
-        {/* Invisible title for accessibility if no visible title exists */}
         <span id={`note-title-${note.id}`} className="sr-only">Note {note.id}</span>
         <div className="flex-1 min-w-0">
           {/* Placeholder for visible title or editable title */}
         </div>
         <div className="flex items-center space-x-1">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={handleTogglePin} 
-            className="hover:bg-white/20 focus:bg-white/20 active:scale-90 transform transition-transform duration-150 focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1" 
-            style={{ color: textColor }}
-            aria-label={note.isPinned ? 'Unpin note' : 'Pin note'}
-            aria-pressed={note.isPinned}
-          >
-            {note.isPinned ? <PinOff className="h-5 w-5" /> : <Pin className="h-5 w-5" />}
-          </Button>
+          {note.status === 'active' && ( // Pinning only makes sense for active notes
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={handleTogglePin} 
+              className="hover:bg-white/20 focus:bg-white/20 active:scale-90 transform transition-transform duration-150 focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1" 
+              style={{ color: textColor }}
+              aria-label={note.isPinned ? 'Unpin note' : 'Pin note'}
+              aria-pressed={note.isPinned}
+            >
+              {note.isPinned ? <PinOff className="h-5 w-5" /> : <Pin className="h-5 w-5" />}
+            </Button>
+          )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button 
@@ -144,33 +159,51 @@ export default function NoteCard({ note, onUpdate, onDelete }: NoteCardProps) {
                 style={{ color: textColor }}
                 aria-label="More options for this note"
                 aria-haspopup="true"
-                aria-expanded={undefined} // Radix will manage this
               >
                 <MoreVertical className="h-5 w-5" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onSelect={() => alert('Color picker not implemented yet.')}>
-                <Palette className="mr-2 h-4 w-4" aria-hidden="true" /> Change Color
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => alert('Tag editing not implemented yet.')}>
-                <TagIcon className="mr-2 h-4 w-4" aria-hidden="true" /> Edit Tags
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => alert('Image attachment not implemented yet.')}>
-                <ImagePlus className="mr-2 h-4 w-4" aria-hidden="true" /> Attach Image
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={handleSummarize} disabled={isSummarizing || !note.content.trim()}>
-                {isSummarizing ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
-                ) : (
-                  <Sparkles className="mr-2 h-4 w-4" aria-hidden="true" />
-                )}
-                Summarize
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={() => onDelete(note.id)} className="text-destructive focus:text-destructive focus:bg-destructive/10">
-                <Trash2 className="mr-2 h-4 w-4" aria-hidden="true" /> Delete Note
-              </DropdownMenuItem>
+              {!isTrashContext && (
+                <>
+                  <DropdownMenuItem onSelect={() => alert('Color picker not implemented yet.')} aria-hidden="true">
+                    <Palette className="mr-2 h-4 w-4" aria-hidden="true" /> Change Color
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => alert('Tag editing not implemented yet.')} aria-hidden="true">
+                    <TagIcon className="mr-2 h-4 w-4" aria-hidden="true" /> Edit Tags
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => alert('Image attachment not implemented yet.')} aria-hidden="true">
+                    <ImagePlus className="mr-2 h-4 w-4" aria-hidden="true" /> Attach Image
+                  </DropdownMenuItem>
+                   <DropdownMenuItem onSelect={() => alert('Archive not implemented yet.')} aria-hidden="true">
+                    <Archive className="mr-2 h-4 w-4" aria-hidden="true" /> Archive
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={handleSummarize} disabled={isSummarizing || !note.content.trim()}>
+                    {isSummarizing ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+                    ) : (
+                      <Sparkles className="mr-2 h-4 w-4" aria-hidden="true" />
+                    )}
+                    Summarize
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  {onTrash && (
+                    <DropdownMenuItem onSelect={() => onTrash(note.id)}>
+                      <Trash className="mr-2 h-4 w-4" aria-hidden="true" /> Move to Trash
+                    </DropdownMenuItem>
+                  )}
+                </>
+              )}
+              {isTrashContext && onRestore && (
+                <DropdownMenuItem onSelect={() => onRestore(note.id)}>
+                  <RotateCcw className="mr-2 h-4 w-4" aria-hidden="true" /> Restore Note
+                </DropdownMenuItem>
+              )}
+              {isTrashContext && onDeletePermanently && (
+                 <DropdownMenuItem onSelect={() => onDeletePermanently(note.id)} className="text-destructive focus:text-destructive focus:bg-destructive/10">
+                  <Trash2 className="mr-2 h-4 w-4" aria-hidden="true" /> Delete Permanently
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -184,29 +217,30 @@ export default function NoteCard({ note, onUpdate, onDelete }: NoteCardProps) {
             value={content}
             onChange={handleContentChange}
             onFocus={handleTextareaFocus}
-            onBlur={handleSave} // Save on blur
+            onBlur={handleSave}
             placeholder="Your note here..."
             className="w-full h-full resize-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0 p-1 min-h-[100px] text-sm"
             style={{ backgroundColor: 'transparent', color: textColor }}
             aria-label={`Note content for note ${note.id}`}
             aria-describedby={`note-meta-${note.id}`}
+            disabled={isTrashContext} // Disable editing in trash context
           />
         </div>
         {note.imageUrl && (
           <div className="mt-2 aspect-video relative overflow-hidden rounded-md">
             <Image 
               src={note.imageUrl} 
-              alt={`Attachment for note ${note.id}`} // More descriptive alt text
+              alt={`Attachment for note ${note.id}`}
               layout="fill" 
               objectFit="cover" 
-              data-ai-hint="abstract texture" 
+              data-ai-hint={note.dataAiHint || "abstract texture"}
             />
           </div>
         )}
       </CardContent>
       <CardFooter className="p-4 flex flex-col items-start space-y-2 text-xs" id={`note-meta-${note.id}`}>
-        <div className={`transition-all duration-300 ease-in-out ${isEditing ? 'opacity-100 translate-y-0 h-auto' : 'opacity-0 -translate-y-2 h-0 pointer-events-none overflow-hidden'}`}>
-          {isEditing && ( 
+        <div className={`transition-all duration-300 ease-in-out ${isEditing && !isTrashContext ? 'opacity-100 translate-y-0 h-auto' : 'opacity-0 -translate-y-2 h-0 pointer-events-none overflow-hidden'}`}>
+          {isEditing && !isTrashContext && ( 
             <Button size="sm" onClick={handleSave} className="self-start mt-2" variant="default" aria-label={`Save changes to note ${note.id}`}>
                 <Save className="mr-2 h-4 w-4" aria-hidden="true" /> Save
             </Button>
@@ -227,6 +261,11 @@ export default function NoteCard({ note, onUpdate, onDelete }: NoteCardProps) {
         <p className="opacity-70 self-end text-xs mt-1">
           Updated: <time dateTime={note.updatedAt}>{new Date(note.updatedAt).toLocaleDateString()}</time>
         </p>
+         {isTrashContext && note.trashedAt && (
+          <p className="opacity-70 self-end text-xs mt-1 text-destructive">
+            Trashed: <time dateTime={note.trashedAt}>{new Date(note.trashedAt).toLocaleDateString()}</time>
+          </p>
+        )}
       </CardFooter>
     </Card>
   );
