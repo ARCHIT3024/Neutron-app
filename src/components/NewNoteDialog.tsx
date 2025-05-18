@@ -14,6 +14,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from '@/components/ui/label';
+import { Palette, Tags, Bold, Underline, List } from 'lucide-react';
+import { Separator } from '@/components/ui/separator'; // Added for visual separation
 
 interface NewNoteDialogProps {
   isOpen: boolean;
@@ -26,19 +28,17 @@ const NewNoteDialog: FC<NewNoteDialogProps> = ({ isOpen, onClose, onSave }) => {
 
   useEffect(() => {
     if (isOpen) {
-      // Reset content when dialog opens, or set a default
       setContent('New Note! Click to edit...');
     }
   }, [isOpen]);
 
   const handleSave = () => {
     if (content.trim() === '') {
-      // Optional: Add a toast or validation message if content is empty
-      onSave('New Note! Click to edit...'); // Save with default if empty
+      onSave('New Note! Click to edit...'); 
     } else {
       onSave(content);
     }
-    onClose(); // Close dialog after saving
+    onClose(); 
   };
 
   const handleOpenChange = (open: boolean) => {
@@ -47,15 +47,24 @@ const NewNoteDialog: FC<NewNoteDialogProps> = ({ isOpen, onClose, onSave }) => {
     }
   };
 
+  // Placeholder handlers for new feature buttons
+  const handleFeatureAlert = (featureName: string, markdownHint?: string) => {
+    let message = `${featureName} feature is not fully implemented yet.`;
+    if (markdownHint) {
+      message += `\n\nFor now, you can use markdown: ${markdownHint}`;
+    }
+    alert(message);
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[480px] bg-card shadow-xl rounded-lg">
+      <DialogContent className="sm:max-w-[520px] bg-card shadow-xl rounded-lg">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold text-card-foreground">Create New Note</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
-            <Label htmlFor="new-note-content" className="text-sm font-medium text-card-foreground/80">
+            <Label htmlFor="new-note-content" className="text-sm font-medium text-card-foreground/80 sr-only">
               Note Content
             </Label>
             <Textarea
@@ -63,12 +72,65 @@ const NewNoteDialog: FC<NewNoteDialogProps> = ({ isOpen, onClose, onSave }) => {
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="Start typing your note here..."
-              className="min-h-[150px] text-sm bg-background border-border focus:ring-primary focus:border-primary rounded-md p-3"
+              className="min-h-[180px] text-sm bg-background border-border focus:ring-primary focus:border-primary rounded-md p-3"
               autoFocus
             />
           </div>
+          
+          <Separator className="my-2" />
+
+          <div className="flex items-center justify-start space-x-2 px-1">
+            <Button 
+              variant="outline" 
+              size="icon" 
+              onClick={() => handleFeatureAlert("Change Color")}
+              aria-label="Change note color"
+              className="h-8 w-8"
+            >
+              <Palette className="h-4 w-4" />
+            </Button>
+            <Button 
+              variant="outline" 
+              size="icon" 
+              onClick={() => handleFeatureAlert("Edit Tags")}
+              aria-label="Edit tags"
+              className="h-8 w-8"
+            >
+              <Tags className="h-4 w-4" />
+            </Button>
+            
+            <Separator orientation="vertical" className="h-6 mx-2" />
+
+            <Button 
+              variant="outline" 
+              size="icon" 
+              onClick={() => handleFeatureAlert("Bold text", "**bold text**")}
+              aria-label="Bold text"
+              className="h-8 w-8"
+            >
+              <Bold className="h-4 w-4" />
+            </Button>
+            <Button 
+              variant="outline" 
+              size="icon" 
+              onClick={() => handleFeatureAlert("Underline text", "<u>underlined text</u> (HTML must be rendered appropriately)")}
+              aria-label="Underline text"
+              className="h-8 w-8"
+            >
+              <Underline className="h-4 w-4" />
+            </Button>
+            <Button 
+              variant="outline" 
+              size="icon" 
+              onClick={() => handleFeatureAlert("List format", "\n* Item 1\n* Item 2")}
+              aria-label="List format"
+              className="h-8 w-8"
+            >
+              <List className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
-        <DialogFooter className="sm:justify-end space-x-2">
+        <DialogFooter className="sm:justify-end space-x-2 pt-2">
           <DialogClose asChild>
             <Button type="button" variant="outline">
               Cancel
