@@ -213,7 +213,7 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent 
-        className="sm:max-w-[580px] bg-card shadow-xl rounded-lg"
+        className="sm:max-w-[580px] bg-card shadow-xl rounded-lg max-h-[85vh] overflow-y-auto"
         style={{ backgroundColor: selectedColor, transition: 'background-color 0.3s ease', color: mainDialogTextColor }}
         onPointerDownOutside={(e) => {
           if ((e.target as HTMLElement)?.closest('[data-radix-popper-content-wrapper]')) {
@@ -222,12 +222,12 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
         }}
         aria-label={dialogAccessibleTitle}
       >
-        <DialogHeader>
+        <DialogHeader className="sticky top-0 bg-inherit z-10 pt-6 -mt-6 px-6 -mx-6 pb-4 border-b">
           <DialogTitle className="text-lg font-semibold" style={{ color: mainDialogTextColor }}>
             {dialogAccessibleTitle}
           </DialogTitle>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
+        <div className="grid gap-4 py-4 px-0.5"> {/* Added px-0.5 for slight scrollbar padding if content scrolls */}
           <div className="grid gap-2">
             <Label htmlFor="note-title" className="text-sm font-medium" style={{ color: mainDialogTextColor === '#000000' ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.7)'}}>
               Title
@@ -380,7 +380,7 @@ const NoteEditorDialog: FC<NoteEditorDialogProps> = ({ isOpen, onClose, onSave, 
             </Button>
           </div>
         </div>
-        <DialogFooter className="sm:justify-end space-x-2 pt-2">
+        <DialogFooter className="sm:justify-end space-x-2 pt-2 sticky bottom-0 bg-inherit z-10 pb-6 -mb-6 -mx-6 px-6 border-t">
           <DialogClose asChild>
             <Button type="button" variant="outline" style={{ color: toolbarIconColor }}>
               Cancel

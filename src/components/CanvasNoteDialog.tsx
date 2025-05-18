@@ -97,7 +97,7 @@ const CanvasNoteDialog: FC<CanvasNoteDialogProps> = ({ isOpen, onClose, onSave, 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent 
-        className="sm:max-w-[600px] md:max-w-[700px] lg:max-w-[800px] xl:max-w-[900px] bg-card shadow-xl rounded-lg p-6"
+        className="sm:max-w-[600px] md:max-w-[700px] lg:max-w-[800px] xl:max-w-[900px] bg-card shadow-xl rounded-lg p-6 max-h-[85vh] overflow-y-auto"
         aria-label={dialogTitle}
       >
         <DialogHeader>
@@ -158,7 +158,7 @@ const CanvasNoteDialog: FC<CanvasNoteDialogProps> = ({ isOpen, onClose, onSave, 
           </div>
 
         </div>
-        <DialogFooter className="sm:justify-end space-x-2 pt-2">
+        <DialogFooter className="sm:justify-end space-x-2 pt-2 sticky bottom-0 bg-card pb-6 -mb-6 -mx-6 px-6 border-t">
           <DialogClose asChild>
             <Button type="button" variant="outline">
               Cancel
