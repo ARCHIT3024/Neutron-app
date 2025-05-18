@@ -2,19 +2,19 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import type { Note } from '@/types';
+import type { Note, Tag } from '@/types'; // Ensure Tag is imported
 import NoteCard from '@/components/NoteCard';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Loader2 } from 'lucide-react';
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 import { useToast } from '@/hooks/use-toast';
-import NewNoteDialog from '@/components/NewNoteDialog'; // Import the new dialog
+import NewNoteDialog from '@/components/NewNoteDialog';
 
 const initialNotesData: Note[] = [
   {
     id: '1',
     title: 'Welcome to StickyCanvas!',
-    content: 'This is your first note. Click the title or content to edit, or use the menu for more options.',
+    content: 'This is your first note. Click the title or content to edit, or use the menu for more options.\n\n**Try this:**\n* Edit me!\n* Pin me!',
     color: '#FFFACD', // LemonChiffon
     tags: [{ id: 'tag1', name: 'Welcome' }],
     isPinned: false,
@@ -29,7 +29,7 @@ const initialNotesData: Note[] = [
   {
     id: '2',
     title: 'Pin Important Notes',
-    content: 'Pin important notes to keep them at the top! This note is pinned.',
+    content: 'Pin important notes to keep them at the top! This note is pinned.\nYou can also add tags and change colors.',
     color: '#ADD8E6', // LightBlue
     tags: [{ id: 'tag2', name: 'Tip' }, {id: 'tag3', name: 'Important'}],
     isPinned: true,
@@ -42,9 +42,9 @@ const initialNotesData: Note[] = [
   {
     id: '3',
     title: 'AI Summarization Tip',
-    content: 'Try summarizing a long note with the AI Sparkles icon in the menu. It helps to get a quick overview.',
+    content: 'Try summarizing a long note with the AI Sparkles icon in the menu. It helps to get a quick overview. This is particularly useful for notes with a lot of text content that you want to quickly digest.',
     color: '#90EE90', // LightGreen
-    tags: [{ id: 'tag4', name: 'Feature' }],
+    tags: [{ id: 'tag4', name: 'Feature' }, {id: 'tag5', name: 'AI'}],
     isPinned: false,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -94,13 +94,13 @@ export default function HomePage() {
     setIsNewNoteDialogOpen(true);
   };
 
-  const handleSaveNewNote = (title: string, content: string) => {
+  const handleSaveNewNote = (title: string, content: string, color: string, tags: Tag[]) => {
     const newNote: Note = {
       id: crypto.randomUUID(),
       title: title, 
       content: content, 
-      color: '#FFFFFF', 
-      tags: [],
+      color: color, 
+      tags: tags,
       isPinned: false,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -224,3 +224,5 @@ const StickyNoteIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <path d="M15 3v6h6" />
   </svg>
 );
+
+    
