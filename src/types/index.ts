@@ -6,11 +6,13 @@ export interface Tag {
 
 export interface Note {
   id: string;
+  title?: string; // Optional title for the note
   content: string;
   color: string; // Hex color string for note background
   tags: Tag[];
   isPinned: boolean;
   imageUrl?: string;
+  dataAiHint?: string; // Hint for AI image search if imageUrl is a placeholder
   summary?: string;
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string

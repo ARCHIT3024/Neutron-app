@@ -1,9 +1,10 @@
 
 "use client";
 
-import type { Note, Tag } from '@/types';
+import type { Note } from '@/types';
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
+import { Input } from '@/components/ui/input'; // Added Input
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -21,9 +22,9 @@ import {
   Loader2,
   Save,
   Archive,
-  ArchiveRestore, // For Unarchive
-  RotateCcw, // For Restore from Trash
-  Trash, // For Move to Trash
+  ArchiveRestore, 
+  RotateCcw, 
+  Trash, 
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -37,20 +38,23 @@ import Image from 'next/image';
 interface NoteCardProps {
   note: Note;
   onUpdate: (id: string, updates: Partial<Note>) => void;
-  onTrash?: (id: string) => void; // Moves to trash (from active OR archive)
-  onRestore?: (id: string) => void; // Restores from trash to active
-  onDeletePermanently?: (id: string) => void; // Deletes forever from trash
-  onArchive?: (id: string) => void; // Moves from active to archive
-  onUnarchive?: (id: string) => void; // Moves from archive to active
+  onTrash?: (id: string) => void; 
+  onRestore?: (id: string) => void; 
+  onDeletePermanently?: (id: string) => void; 
+  onArchive?: (id: string) => void; 
+  onUnarchive?: (id: string) => void; 
 }
 
-// Utility to get contrasting text color (simplified)
 const getTextColorForBackground = (bgColor?: string): string => {
   if (!bgColor || !bgColor.startsWith('#')) return 'hsl(var(--card-foreground))';
-  const r = parseInt(bgColor.slice(1, 3), 16);
-  const g = parseInt(bgColor.slice(3, 5), 16);
-  const b = parseInt(bgColor.slice(5, 7), 16);
-  return (r * 0.299 + g * 0.587 + b * 0.114) > 186 ? '#000000' : '#FFFFFF';
+  try {
+    const r = parseInt(bgColor.slice(1, 3), 16);
+    const g = parseInt(bgColor.slice(3, 5), 16);
+    const b = parseInt(bgColor.slice(5, 7), 16);
+    return (r * 0.299 + g * 0.587 + b * 0.114) > 186 ? '#000000' : '#FFFFFF';
+  } catch (e) {
+    return 'hsl(var(--card-foreground))'; // Fallback
+  }
 };
 
 
@@ -63,13 +67,19 @@ export default function NoteCard({
   onArchive,
   onUnarchive,
 }: NoteCardProps) {
+  const [title, setTitle] = useState(note.title || '');
   const [content, setContent] = useState(note.content);
   const [isEditing, setIsEditing] = useState(false);
   const [isSummarizing, setIsSummarizing] = useState(false);
   const { toast } = useToast();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const titleInputRef = useRef<HTMLInputElement>(null);
 
   const textColor = getTextColorForBackground(note.color);
+
+  useEffect(() => {
+    setTitle(note.title || '');
+  }, [note.title]);
 
   useEffect(() => {
     setContent(note.content);
@@ -78,18 +88,37 @@ export default function NoteCard({
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setContent(e.target.value);
   };
+  
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setTitle(e.target.value);
+  };
 
-  const handleTextareaFocus = () => {
+  const handleFocus = () => {
     if (note.status === 'active') {
       setIsEditing(true);
     }
   };
 
-  const handleSave = () => {
-    if (note.status !== 'active') return; // Should not happen if textarea is disabled
+  const handleSaveAll = () => {
+    if (note.status !== 'active') {
+      setIsEditing(false);
+      return;
+    }
 
+    const updates: Partial<Note> = {};
+    let changed = false;
+
+    if (title !== (note.title || '')) {
+      updates.title = title;
+      changed = true;
+    }
     if (content !== note.content) {
-      onUpdate(note.id, { content, updatedAt: new Date().toISOString() });
+      updates.content = content;
+      changed = true;
+    }
+
+    if (changed) {
+      onUpdate(note.id, { ...updates, updatedAt: new Date().toISOString() });
       toast({ title: "Note Saved!", description: "Your changes have been saved." });
     }
     setIsEditing(false);
@@ -106,13 +135,14 @@ export default function NoteCard({
 
   const handleSummarize = async () => {
     if (note.status !== 'active') return;
-    if (!note.content.trim()) {
+    const textToSummarize = note.title ? `${note.title}\n\n${note.content}` : note.content;
+    if (!textToSummarize.trim()) {
       toast({ title: 'Cannot summarize', description: 'Note content is empty.', variant: 'destructive' });
       return;
     }
     setIsSummarizing(true);
     try {
-      const result = await summarizeNote({ noteContent: note.content });
+      const result = await summarizeNote({ noteContent: textToSummarize });
       onUpdate(note.id, { summary: result.summary, updatedAt: new Date().toISOString() });
       toast({
         title: 'Note Summarized!',
@@ -135,15 +165,25 @@ export default function NoteCard({
 
   return (
     <Card
-      className="flex flex-col h-full shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:scale-[1.01]"
+      className="flex flex-col h-full shadow-lg hover:shadow-xl transition-transform duration-200 ease-in-out hover:scale-[1.01] focus-within:scale-[1.01] focus-within:shadow-2xl"
       style={{ backgroundColor: note.color, color: textColor }}
       data-testid={`note-card-${note.id}`}
-      aria-labelledby={`note-title-${note.id}`}
     >
-      <CardHeader className="flex flex-row items-start justify-between p-4">
-        <span id={`note-title-${note.id}`} className="sr-only">Note {note.id}, Status: {note.status}</span>
-        <div className="flex-1 min-w-0">
-          {/* Placeholder for visible title or editable title */}
+      <CardHeader className="flex flex-row items-start justify-between p-4 space-y-0">
+        <div className="flex-1 min-w-0 pr-2">
+          <Input
+            ref={titleInputRef}
+            value={title}
+            onChange={handleTitleChange}
+            onFocus={handleFocus}
+            onBlur={handleSaveAll}
+            placeholder="Untitled"
+            className={`w-full text-xl font-bold border-transparent focus-visible:border-input focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 bg-transparent h-auto p-1 transition-all duration-150 ease-in-out
+              ${isEditing && isEditable ? 'ring-primary/70' : 'ring-0 ring-transparent'}`}
+            style={{ color: textColor, WebkitBoxShadow: `0 0 0px 1000px ${note.color || 'transparent'} inset` /* Fix for autofill bg color */ }}
+            aria-label={`Note title for note ${note.id}`}
+            disabled={!isEditable}
+          />
         </div>
         <div className="flex items-center space-x-1">
           {note.status === 'active' && ( 
@@ -173,7 +213,6 @@ export default function NoteCard({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              {/* Active Note Actions */}
               {note.status === 'active' && (
                 <>
                   <DropdownMenuItem onSelect={() => alert('Color picker not implemented yet.')} aria-hidden="true">
@@ -190,7 +229,7 @@ export default function NoteCard({
                       <Archive className="mr-2 h-4 w-4" aria-hidden="true" /> Archive
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuItem onSelect={handleSummarize} disabled={isSummarizing || !note.content.trim()}>
+                  <DropdownMenuItem onSelect={handleSummarize} disabled={isSummarizing || (!note.content.trim() && !note.title?.trim())}>
                     {isSummarizing ? (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
                     ) : (
@@ -206,8 +245,6 @@ export default function NoteCard({
                   )}
                 </>
               )}
-
-              {/* Archived Note Actions */}
               {note.status === 'archived' && (
                 <>
                   {onUnarchive && (
@@ -215,15 +252,13 @@ export default function NoteCard({
                       <ArchiveRestore className="mr-2 h-4 w-4" aria-hidden="true" /> Unarchive
                     </DropdownMenuItem>
                   )}
-                  {onTrash && ( // Move from Archive to Trash
+                  {onTrash && ( 
                     <DropdownMenuItem onSelect={() => onTrash(note.id)}>
                       <Trash className="mr-2 h-4 w-4" aria-hidden="true" /> Move to Trash
                     </DropdownMenuItem>
                   )}
                 </>
               )}
-
-              {/* Trashed Note Actions */}
               {note.status === 'trashed' && (
                 <>
                   {onRestore && (
@@ -242,7 +277,7 @@ export default function NoteCard({
           </DropdownMenu>
         </div>
       </CardHeader>
-      <CardContent className="p-4 flex-1">
+      <CardContent className="p-4 pt-0 flex-1"> {/* pt-0 to reduce space if title is in header */}
         <div 
           className={`relative p-0.5 rounded-md transition-all duration-200 ease-in-out ${isEditing && isEditable ? 'ring-2 ring-primary/70 shadow-md' : 'ring-0 ring-transparent'}`}
         >
@@ -250,13 +285,12 @@ export default function NoteCard({
             ref={textareaRef}
             value={content}
             onChange={handleContentChange}
-            onFocus={handleTextareaFocus}
-            onBlur={handleSave}
+            onFocus={handleFocus}
+            onBlur={handleSaveAll}
             placeholder="Your note here..."
-            className="w-full h-full resize-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0 p-1 min-h-[100px] text-sm"
+            className="w-full h-full resize-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0 p-1 min-h-[80px] text-sm" // min-h reduced slightly
             style={{ backgroundColor: 'transparent', color: textColor }}
             aria-label={`Note content for note ${note.id}`}
-            aria-describedby={`note-meta-${note.id}`}
             disabled={!isEditable}
           />
         </div>
@@ -264,7 +298,7 @@ export default function NoteCard({
           <div className="mt-2 aspect-video relative overflow-hidden rounded-md">
             <Image 
               src={note.imageUrl} 
-              alt={`Attachment for note ${note.id}`}
+              alt={note.title || `Attachment for note ${note.id}`}
               layout="fill" 
               objectFit="cover" 
               data-ai-hint={note.dataAiHint || "abstract texture"}
@@ -275,12 +309,12 @@ export default function NoteCard({
       <CardFooter className="p-4 flex flex-col items-start space-y-2 text-xs" id={`note-meta-${note.id}`}>
         <div className={`transition-all duration-300 ease-in-out ${isEditing && isEditable ? 'opacity-100 translate-y-0 h-auto' : 'opacity-0 -translate-y-2 h-0 pointer-events-none overflow-hidden'}`}>
           {isEditing && isEditable && ( 
-            <Button size="sm" onClick={handleSave} className="self-start mt-2" variant="default" aria-label={`Save changes to note ${note.id}`}>
+            <Button size="sm" onClick={handleSaveAll} className="self-start" variant="default" aria-label={`Save changes to note ${note.id}`}>
                 <Save className="mr-2 h-4 w-4" aria-hidden="true" /> Save
             </Button>
           )}
         </div>
-        <div className="flex flex-wrap gap-1 mt-auto pt-2">
+        <div className="flex flex-wrap gap-1 mt-auto pt-1">
           {note.tags.map((tag) => (
             <Badge key={tag.id} variant="secondary" style={{ backgroundColor: 'rgba(128,128,128,0.2)', color: textColor }} aria-label={`Tag: ${tag.name}`}>
               {tag.name}

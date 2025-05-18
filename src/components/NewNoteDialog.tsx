@@ -12,28 +12,31 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input"; // Added Input
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from '@/components/ui/label';
 import { Palette, Tags, Bold, Underline, List } from 'lucide-react';
-import { Separator } from '@/components/ui/separator'; // Added for visual separation
+import { Separator } from '@/components/ui/separator';
 
 interface NewNoteDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (content: string) => void;
+  onSave: (title: string, content: string) => void; // Updated to include title
 }
 
 const NewNoteDialog: FC<NewNoteDialogProps> = ({ isOpen, onClose, onSave }) => {
+  const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
 
   useEffect(() => {
     if (isOpen) {
+      setTitle(''); // Start with empty title
       setContent(''); // Start with empty content
     }
   }, [isOpen]);
 
   const handleSave = () => {
-    onSave(content); // Save the exact content, even if empty
+    onSave(title, content); 
     onClose(); 
   };
 
@@ -43,7 +46,6 @@ const NewNoteDialog: FC<NewNoteDialogProps> = ({ isOpen, onClose, onSave }) => {
     }
   };
 
-  // Placeholder handlers for new feature buttons
   const handleFeatureAlert = (featureName: string, markdownHint?: string) => {
     let message = `${featureName} feature is not fully implemented yet.`;
     if (markdownHint) {
@@ -60,16 +62,28 @@ const NewNoteDialog: FC<NewNoteDialogProps> = ({ isOpen, onClose, onSave }) => {
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
-            <Label htmlFor="new-note-content" className="text-sm font-medium text-card-foreground/80 sr-only">
-              Note Content
+            <Label htmlFor="new-note-title" className="text-sm font-medium text-card-foreground/80">
+              Title
+            </Label>
+            <Input
+              id="new-note-title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Note Title"
+              className="text-base bg-background border-border focus:ring-primary focus:border-primary rounded-md p-3"
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="new-note-content" className="text-sm font-medium text-card-foreground/80">
+              Content
             </Label>
             <Textarea
               id="new-note-content"
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="Start typing your note here..."
-              className="min-h-[180px] text-sm bg-background border-border focus:ring-primary focus:border-primary rounded-md p-3"
-              autoFocus
+              className="min-h-[150px] text-sm bg-background border-border focus:ring-primary focus:border-primary rounded-md p-3"
+              // Removed autoFocus from content to allow title to be focused first if desired, or add to title
             />
           </div>
           

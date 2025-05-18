@@ -13,7 +13,8 @@ import NewNoteDialog from '@/components/NewNoteDialog'; // Import the new dialog
 const initialNotesData: Note[] = [
   {
     id: '1',
-    content: 'Welcome to StickyCanvas! This is your first note. Click to edit, or use the menu for more options.',
+    title: 'Welcome to StickyCanvas!',
+    content: 'This is your first note. Click the title or content to edit, or use the menu for more options.',
     color: '#FFFACD', // LemonChiffon
     tags: [{ id: 'tag1', name: 'Welcome' }],
     isPinned: false,
@@ -27,6 +28,7 @@ const initialNotesData: Note[] = [
   },
   {
     id: '2',
+    title: 'Pin Important Notes',
     content: 'Pin important notes to keep them at the top! This note is pinned.',
     color: '#ADD8E6', // LightBlue
     tags: [{ id: 'tag2', name: 'Tip' }, {id: 'tag3', name: 'Important'}],
@@ -39,6 +41,7 @@ const initialNotesData: Note[] = [
   },
   {
     id: '3',
+    title: 'AI Summarization Tip',
     content: 'Try summarizing a long note with the AI Sparkles icon in the menu. It helps to get a quick overview.',
     color: '#90EE90', // LightGreen
     tags: [{ id: 'tag4', name: 'Feature' }],
@@ -56,7 +59,7 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true);
   const { isMobile } = useSidebar();
   const { toast } = useToast();
-  const [isNewNoteDialogOpen, setIsNewNoteDialogOpen] = useState(false); // State for dialog
+  const [isNewNoteDialogOpen, setIsNewNoteDialogOpen] = useState(false); 
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -91,11 +94,12 @@ export default function HomePage() {
     setIsNewNoteDialogOpen(true);
   };
 
-  const handleSaveNewNote = (content: string) => {
+  const handleSaveNewNote = (title: string, content: string) => {
     const newNote: Note = {
       id: crypto.randomUUID(),
-      content: content, // Content from dialog
-      color: '#FFFFFF', // Default color, can be made customizable later
+      title: title, 
+      content: content, 
+      color: '#FFFFFF', 
       tags: [],
       isPinned: false,
       createdAt: new Date().toISOString(),
