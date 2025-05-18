@@ -11,15 +11,15 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarFooter,
-  useSidebar, // Import useSidebar
+  useSidebar, 
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
-import { Home, Archive, Trash2, StickyNote, Settings, LogOut, Pin, PinOff, PanelLeft } from 'lucide-react';
+import { Home, Archive, Trash2, StickyNote, Settings, LogOut, PanelLeft } from 'lucide-react'; // Removed Pin, PinOff
 import { cn } from '@/lib/utils';
 
 export default function AppSidebar() {
   const pathname = usePathname(); 
-  const { togglePin, isPinned, visualState, isMobile } = useSidebar(); // Get sidebar state
+  const { visualState, isMobile, toggleOverallSidebar } = useSidebar(); 
 
   return (
     <Sidebar collapsible="icon" variant="sidebar" side="left">
@@ -32,31 +32,16 @@ export default function AppSidebar() {
           </Button>
           <h2 className={cn(
             "text-lg font-semibold text-sidebar-foreground truncate",
-            visualState === 'collapsed' && !isMobile && "hidden" // Hide text when collapsed on desktop
+            visualState === 'collapsed' && !isMobile && "hidden" 
           )}>
             StickyCanvas
           </h2>
         </div>
-        {!isMobile && ( // Only show Pin button on desktop
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={togglePin} 
-            className={cn(
-              "shrink-0 text-sidebar-foreground hover:text-sidebar-primary",
-               visualState === 'collapsed' ? "hidden" : "flex" // Show only when expanded
-            )}
-            aria-label={isPinned ? "Unpin sidebar" : "Pin sidebar"}
-            title={isPinned ? "Unpin sidebar" : "Pin sidebar"}
-          >
-            {isPinned ? <PinOff className="size-5" /> : <Pin className="size-5" />}
-          </Button>
-        )}
-         {isMobile && ( // Show hamburger trigger only on mobile
+         {isMobile && ( 
             <Button
                 variant="ghost"
                 size="icon"
-                onClick={togglePin} // On mobile, togglePin effectively toggles the sheet
+                onClick={toggleOverallSidebar} 
                 className="shrink-0 text-sidebar-foreground hover:text-sidebar-primary"
                 aria-label="Toggle navigation menu"
             >
