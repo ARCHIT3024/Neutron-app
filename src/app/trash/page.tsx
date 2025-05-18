@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import type { Note } from '@/types';
 import NoteCard from '@/components/NoteCard';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button'; // Added buttonVariants import
 import { Trash2 as Trash2IconLucide, Loader2, RotateCcw, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
