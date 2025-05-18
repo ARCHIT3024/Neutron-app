@@ -28,16 +28,12 @@ const NewNoteDialog: FC<NewNoteDialogProps> = ({ isOpen, onClose, onSave }) => {
 
   useEffect(() => {
     if (isOpen) {
-      setContent('New Note! Click to edit...');
+      setContent(''); // Start with empty content
     }
   }, [isOpen]);
 
   const handleSave = () => {
-    if (content.trim() === '') {
-      onSave('New Note! Click to edit...'); 
-    } else {
-      onSave(content);
-    }
+    onSave(content); // Save the exact content, even if empty
     onClose(); 
   };
 
