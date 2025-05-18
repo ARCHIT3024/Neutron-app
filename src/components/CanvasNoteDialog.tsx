@@ -51,8 +51,6 @@ const CanvasNoteDialog: FC<CanvasNoteDialogProps> = ({ isOpen, onClose, onSave, 
         setTitle(noteToEdit.title || '');
         setSelectedCardColor(noteToEdit.color || PRESET_COLORS[0]);
         setTagsString(noteToEdit.tags?.map(tag => tag.name).join(', ') || '');
-        // For canvas, focus might not be on title initially, depends on interaction model.
-        // Let's keep focus on title for consistency.
         setTimeout(() => titleInputRef.current?.focus(), 100);
       } else {
         setTitle('');
@@ -67,7 +65,6 @@ const CanvasNoteDialog: FC<CanvasNoteDialogProps> = ({ isOpen, onClose, onSave, 
     const canvasData = getCanvasDataRef.current?.();
     if (!canvasData) {
       console.error("Canvas data is not available");
-      // Potentially show a toast to the user here if canvas is empty and required
       return;
     }
     
@@ -97,15 +94,15 @@ const CanvasNoteDialog: FC<CanvasNoteDialogProps> = ({ isOpen, onClose, onSave, 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent 
-        className="sm:max-w-[600px] md:max-w-[700px] lg:max-w-[800px] xl:max-w-[900px] bg-card shadow-xl rounded-lg p-6 max-h-[85vh] overflow-y-auto"
+        className="sm:max-w-[600px] md:max-w-[700px] lg:max-w-[800px] xl:max-w-[900px] bg-card shadow-xl rounded-lg p-0 flex flex-col max-h-[85vh]"
         aria-label={dialogTitle}
       >
-        <DialogHeader>
+        <DialogHeader className="bg-card z-10 px-6 pt-6 pb-4 border-b">
           <DialogTitle className="text-lg font-semibold text-card-foreground">
             {dialogTitle}
           </DialogTitle>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
+        <div className="grid gap-4 py-4 px-6 flex-grow overflow-y-auto min-h-0">
           <div className="grid gap-2">
             <Label htmlFor="canvas-note-title" className="text-sm font-medium text-card-foreground/80">
               Title
@@ -158,7 +155,7 @@ const CanvasNoteDialog: FC<CanvasNoteDialogProps> = ({ isOpen, onClose, onSave, 
           </div>
 
         </div>
-        <DialogFooter className="sm:justify-end space-x-2 pt-2 sticky bottom-0 bg-card pb-6 -mb-6 -mx-6 px-6 border-t">
+        <DialogFooter className="sm:justify-end space-x-2 bg-card px-6 pt-4 pb-6 border-t z-10">
           <DialogClose asChild>
             <Button type="button" variant="outline">
               Cancel
@@ -175,4 +172,3 @@ const CanvasNoteDialog: FC<CanvasNoteDialogProps> = ({ isOpen, onClose, onSave, 
 
 
 export default CanvasNoteDialog;
-
